@@ -1,0 +1,9 @@
+{
+  "delimiter": "auto",
+  "barcode_rules": [
+    {
+      "type": "prefix",
+      "value": "1P"
+    }
+  ]
+}

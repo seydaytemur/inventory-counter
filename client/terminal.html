@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Stok Sayım — Terminal</title>
+<style>
+  :root {
+    --bg:        #0b0e18;
+    --surface:   #131722;
+    --surface2:  #1c2133;
+    --surface3:  #242a40;
+    --border:    #2a3152;
+    --border2:   #374069;
+    --accent:    #3b7fff;
+    --accent-dim:#1e4a99;
+    --accent2:   #7c5cfc;
+    --success:   #22c77a;
+    --success-bg:#071a10;
+    --warning:   #f59e0b;
+    --danger:    #ef4444;
+    --danger-bg: #1a0707;
+    --text:      #dde3f5;
+    --text2:     #a8b2d8;
+    --muted:     #5c6690;
+    --font-mono: 'JetBrains Mono', 'Fira Mono', 'Consolas', monospace;
+    --font-ui:   'Inter', 'Segoe UI', system-ui, sans-serif;
+    --radius:    8px;
+    --radius-sm: 5px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── GİRİŞ EKRANI ── */
+  #login-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 32px 24px;
+    gap: 0;
+    background: var(--bg);
+  }
+
+  .login-card {
+    width: 100%; max-width: 340px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 36px 28px 28px;
+    display: flex; flex-direction: column; gap: 20px;
+    align-items: center;
+  }
+
+  .login-brand {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+
+  .login-icon {
+    width: 56px; height: 56px;
+    background: var(--accent-dim);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .login-title {
+    font-size: 17px; font-weight: 700; letter-spacing: .01em;
+    color: var(--text); text-align: center;
+  }
+
+  .login-divider {
+    width: 100%; height: 1px; background: var(--border);
+  }
+
+  .login-field { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+  .login-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .login-input {
+    width: 100%;
+    padding: 13px 14px;
+    background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: var(--radius); color: var(--text);
+    font-size: 15px; font-family: var(--font-ui);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .login-input:focus { border-color: var(--accent); }
+  .login-input::placeholder { color: var(--muted); }
+
+  .btn-login {
+    width: 100%;
+    padding: 14px; border-radius: var(--radius); border: none;
+    background: var(--accent); color: #fff;
+    font-size: 14px; font-weight: 700; letter-spacing: .03em;
+    cursor: pointer; transition: opacity .15s, background .15s;
+  }
+  .btn-login:active { opacity: .85; }
+  .btn-login:disabled { opacity: .35; cursor: default; }
+
+  /* ── ANA EKRAN ── */
+  #main-screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+
+  /* Topbar */
+  .topbar {
+    display: flex; align-items: center;
+    padding: 0 14px; height: 50px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    gap: 10px;
+  }
+  .topbar-brand {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .topbar-icon {
+    width: 28px; height: 28px;
+    background: var(--accent-dim);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .topbar-appname {
+    font-size: 13px; font-weight: 700; letter-spacing: .02em;
+    color: var(--text2);
+  }
+  .topbar-sep {
+    width: 1px; height: 18px; background: var(--border2); flex-shrink: 0;
+  }
+  .topbar-user {
+    font-size: 13px; font-weight: 600; color: var(--text);
+  }
+  .topbar-right {
+    margin-left: auto; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-logout {
+    background: none; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--muted);
+    font-size: 11px; font-weight: 600; letter-spacing: .03em;
+    padding: 4px 10px; cursor: pointer;
+    transition: color .15s, border-color .15s; line-height: 1;
+  }
+  .btn-logout:active { color: var(--text); border-color: var(--border2); }
+
+  .conn-badge {
+    display: flex; align-items: center; gap: 5px;
+    padding: 3px 8px; border-radius: 20px;
+    background: var(--surface2); border: 1px solid var(--border);
+    font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--muted);
+    transition: color .3s, border-color .3s;
+  }
+  .conn-badge.connected { color: var(--success); border-color: #134d2e; background: #071a10; }
+  .conn-badge.error     { color: var(--danger);  border-color: #4d1313; background: var(--danger-bg); }
+  .conn-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* Barkod giriş alanı */
+  .scan-area {
+    padding: 12px 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .scan-labels {
+    display: flex; gap: 8px; align-items: flex-end;
+  }
+  .scan-label {
+    font-size: 10px; font-weight: 600; color: var(--muted);
+    letter-spacing: .06em; text-transform: uppercase;
+  }
+  .scan-label-qty { margin-left: auto; width: 56px; text-align: center; }
+
+  .scan-row { display: flex; gap: 8px; align-items: stretch; }
+
+  .scan-input {
+    flex: 1; min-width: 0; padding: 10px 12px;
+    background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: var(--radius); color: var(--text);
+    font-size: 14px; font-family: var(--font-mono);
+    outline: none; transition: border-color .15s;
+  }
+  .scan-input:focus  { border-color: var(--accent); }
+  .scan-input.error  { border-color: var(--danger); animation: shake .3s; }
+  .scan-input.success{ border-color: var(--success); }
+  .scan-input:disabled { opacity: .4; }
+
+  .qty-input {
+    width: 56px; padding: 10px 6px;
+    background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: var(--radius); color: var(--text);
+    font-size: 15px; font-weight: 700; font-family: var(--font-mono);
+    text-align: center; outline: none; flex-shrink: 0;
+    -webkit-appearance: none; -moz-appearance: textfield; appearance: textfield;
+    transition: border-color .15s;
+  }
+  .qty-input:focus    { border-color: var(--accent2); }
+  .qty-input:disabled { opacity: .4; }
+
+  .btn-send {
+    width: 44px; border-radius: var(--radius); border: none;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; cursor: pointer;
+    transition: opacity .15s, background .15s;
+  }
+  .btn-send:active  { opacity: .75; }
+  .btn-send:disabled{ opacity: .3; background: var(--surface3); cursor: default; }
+
+  /* Feedback banner */
+  .feedback {
+    padding: 9px 12px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+    min-height: 38px;
+    transition: opacity .3s;
+  }
+  .feedback.ok   { background: var(--success-bg); color: var(--success); border: 1px solid #134d2e; }
+  .feedback.err  { background: var(--danger-bg);  color: var(--danger);  border: 1px solid #4d1313; }
+  .feedback.idle { background: transparent; color: transparent; border: 1px solid transparent; }
+
+  /* Session uyarısı */
+  .session-warn {
+    padding: 10px 14px;
+    background: #1f1400; border-bottom: 1px solid #4d3500;
+    color: var(--warning); font-size: 12px; font-weight: 600;
+    display: none; text-align: center; letter-spacing: .01em;
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-shrink: 0;
+  }
+  .tab-btn {
+    flex: 1; padding: 10px 8px; border: none; background: none;
+    color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .03em;
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .15s; text-transform: uppercase;
+  }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── LISTE ── */
+  .list-area {
+    flex: 1; overflow-y: auto;
+    padding: 10px; display: flex; flex-direction: column; gap: 6px;
+  }
+
+  .scan-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+
+  .scan-card-top {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+  }
+
+  .scan-card-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+
+  .scan-barcode {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted); letter-spacing: .05em;
+  }
+  .scan-name {
+    font-size: 13px; font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .scan-qty-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 44px; height: 30px; border-radius: 6px;
+    background: var(--success-bg); border: 1px solid #134d2e;
+    font-family: var(--font-mono); font-size: 15px; font-weight: 700;
+    color: var(--success); flex-shrink: 0;
+  }
+
+  .scan-meta {
+    font-size: 10px; color: var(--muted);
+    display: flex; align-items: center; gap: 8px; letter-spacing: .02em;
+  }
+  .scan-meta-sep { color: var(--border2); }
+
+  .scan-divider { height: 1px; background: var(--border); }
+
+  .scan-actions {
+    display: flex; gap: 6px; align-items: center;
+  }
+  .qty-edit-input {
+    width: 60px; padding: 6px 6px;
+    background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-size: 14px; font-weight: 700; font-family: var(--font-mono);
+    text-align: center; outline: none;
+    -webkit-appearance: none; -moz-appearance: textfield; appearance: textfield;
+    transition: border-color .15s;
+  }
+  .qty-edit-input:focus { border-color: var(--accent2); }
+
+  .btn-update {
+    flex: 1; padding: 6px 10px;
+    background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text2);
+    font-size: 11px; font-weight: 700; letter-spacing: .02em;
+    cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+  }
+  .btn-update:active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .btn-del {
+    padding: 6px 12px;
+    background: var(--danger-bg); border: 1.5px solid #4d1313;
+    border-radius: var(--radius-sm); color: var(--danger);
+    font-size: 11px; font-weight: 700; letter-spacing: .04em;
+    cursor: pointer; text-transform: uppercase;
+    transition: background .15s, border-color .15s;
+  }
+  .btn-del:active { background: #2d0a0a; border-color: var(--danger); }
+
+  .delete-confirm-row {
+    display: flex; gap: 6px; align-items: center;
+    padding: 6px 10px; border-radius: var(--radius-sm);
+    background: var(--danger-bg); border: 1.5px solid #4d1313;
+    animation: fadeIn .15s ease;
+  }
+  .delete-confirm-label {
+    flex: 1; font-size: 11px; font-weight: 600; color: var(--danger);
+  }
+  .btn-del-confirm {
+    padding: 5px 12px; border-radius: var(--radius-sm); border: none;
+    background: var(--danger); color: #fff;
+    font-size: 11px; font-weight: 700; cursor: pointer;
+    transition: opacity .15s;
+  }
+  .btn-del-confirm:active { opacity: .8; }
+  .btn-del-cancel {
+    padding: 5px 10px; border-radius: var(--radius-sm);
+    background: var(--surface2); border: 1.5px solid var(--border);
+    color: var(--text2); font-size: 11px; font-weight: 700; cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-del-cancel:active { background: var(--surface3); }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+  /* Genel tab kartları */
+  .all-summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .all-summary-info { flex: 1; min-width: 0; }
+  .all-summary-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .all-summary-meta { font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: .02em; }
+  .total-qty-big {
+    font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+    color: var(--success); flex-shrink: 0;
+  }
+
+  .empty-state {
+    text-align: center; padding: 48px 20px; color: var(--muted); font-size: 13px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .empty-icon {
+    width: 40px; height: 40px; opacity: .3;
+  }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+  /* ── AUTOCOMPLETE DROPDOWN ── */
+  .suggestions-dropdown {
+    background: var(--surface2);
+    border: 1.5px solid var(--accent);
+    border-radius: var(--radius);
+    overflow-y: auto;
+    max-height: 240px;
+    display: flex; flex-direction: column;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+  .suggestions-dropdown.hidden { display: none; }
+  .suggestion-item {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; display: flex; flex-direction: column; gap: 2px;
+    transition: background .1s;
+  }
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item:active { background: var(--surface3); }
+  .suggestion-bc   { font-family: var(--font-mono); font-size: 11px; color: var(--accent); letter-spacing: .04em; }
+  .suggestion-name { font-size: 12px; color: var(--text2); }
+  .suggestion-count { font-size: 10px; color: var(--muted); padding: 7px 14px; text-align: center; border-top: 1px solid var(--border); }
+
+  /* ── MATCH BANNER ── */
+  .match-suggestion {
+    padding: 8px 12px; border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 600; letter-spacing: .01em;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--success-bg); border: 1px solid #134d2e; color: var(--success);
+  }
+  .match-suggestion.no-match { background: var(--danger-bg); border-color: #4d1313; color: var(--danger); }
+  .match-suggestion.multi    { background: var(--surface2); border-color: var(--border); color: var(--text2); }
+  .match-suggestion.hidden   { display: none; }
+  .match-barcode { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-left: auto; }
+</style>
+</head>
+<body>
+
+<!-- GİRİŞ EKRANI -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b7fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="4" height="18" rx="1"/>
+          <rect x="9" y="3" width="2" height="18" rx="1"/>
+          <rect x="13" y="3" width="3" height="18" rx="1"/>
+          <rect x="18" y="3" width="3" height="18" rx="1"/>
+        </svg>
+      </div>
+      <div class="login-title">Stok Sayım Terminali</div>
+    </div>
+    <div class="login-divider"></div>
+    <div class="login-field">
+      <label class="login-label" for="username-input">Kullanıcı Adı</label>
+      <input class="login-input" id="username-input" type="text"
+        placeholder="Adınız Soyadınız"
+        autocomplete="off" autocorrect="off" autocapitalize="words"
+        oninput="document.getElementById('btn-join').disabled = !this.value.trim()"
+        onkeydown="if(event.key==='Enter') joinSession()" />
+    </div>
+    <button class="btn-login" id="btn-join" disabled onclick="joinSession()">Sayıma Katıl</button>
+  </div>
+</div>
+
+<!-- ANA EKRAN -->
+<div id="main-screen">
+  <div class="session-warn" id="session-warn">
+    Sayım henüz başlamadı veya sona erdi — barkod okutulamaz.
+  </div>
+
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b7fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="4" height="18" rx="1"/>
+          <rect x="9" y="3" width="2" height="18" rx="1"/>
+          <rect x="13" y="3" width="3" height="18" rx="1"/>
+          <rect x="18" y="3" width="3" height="18" rx="1"/>
+        </svg>
+      </div>
+      <span class="topbar-appname">STOK SAYIM</span>
+    </div>
+    <div class="topbar-sep"></div>
+    <span class="topbar-user" id="topbar-user"></span>
+    <div class="topbar-right">
+      <div class="conn-badge" id="conn-badge">
+        <span class="conn-dot"></span>
+        <span id="status-text">bağlanıyor</span>
+      </div>
+      <button class="btn-logout" onclick="confirmLogout()">Geri</button>
+    </div>
+  </div>
+
+  <!-- Barkod giriş -->
+  <div class="scan-area">
+    <div class="scan-labels">
+      <span class="scan-label">Barkod</span>
+      <span class="scan-label scan-label-qty">Adet</span>
+    </div>
+    <div class="scan-row">
+      <input class="scan-input" id="barcode-input" type="text"
+        placeholder="Barkod okutun veya girin..."
+        inputmode="none"
+        autocomplete="off" autocorrect="off" autocapitalize="characters"
+        oninput="onBarcodeInput()"
+        onkeydown="if(event.key==='Enter') resolveAndFocusQty()" />
+      <input class="qty-input" id="qty-input" type="number"
+        value="1" min="1" max="9999"
+        onkeydown="if(event.key==='Enter') sendScan()" />
+      <button class="btn-send" id="btn-send" onclick="sendScan()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </button>
+    </div>
+    <div id="suggestions-dropdown" class="suggestions-dropdown hidden"></div>
+    <div id="match-suggestion" class="match-suggestion hidden"></div>
+    <div class="feedback idle" id="feedback"></div>
+  </div>
+
+  <!-- Tablar -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('mine', this)">Benim Sayımım</button>
+    <button class="tab-btn" onclick="switchTab('all', this)">Genel Sayım</button>
+  </div>
+
+  <!-- Liste -->
+  <div class="list-area" id="list-area">
+    <div class="empty-state">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+      </svg>
+      Henüz kayıt yok
+    </div>
+  </div>
+</div>
+
+<!-- Geri onay modalı -->
+<div id="logout-modal" style="
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.55); z-index:500;
+  align-items:center; justify-content:center;">
+  <div style="
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:28px 24px; width:280px;
+    display:flex; flex-direction:column; gap:16px;">
+    <div style="font-size:15px; font-weight:700; color:var(--text)">Çıkmak istiyor musun?</div>
+    <div style="font-size:13px; color:var(--muted); line-height:1.5">
+      Giriş ekranına döneceksin. Bağlantın kesilecek.
+    </div>
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button onclick="closeLogoutModal()" style="
+        padding:8px 16px; border-radius:6px;
+        background:var(--surface2); border:1px solid var(--border);
+        color:var(--text2); font-size:13px; font-weight:600; cursor:pointer;">
+        Vazgeç
+      </button>
+      <button onclick="logout()" style="
+        padding:8px 16px; border-radius:6px;
+        background:var(--accent); border:none;
+        color:#fff; font-size:13px; font-weight:700; cursor:pointer;">
+        Evet, Çık
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+const S = {
+  user: '',
+  scans: {},
+  isActive: false,
+  tab: 'mine',
+  products: {},
+  productsLoaded: false,
+  lastColumnMapKey: '',
+  barcodeRules: [],        // settings.json'dan gelen temizleme kuralları
+};
+
+let _matchedBarcode = null;
+let _scanResponseHandler = null; // aktif scan onay bekleme handler'ı
+let _scanResponseTimer   = null; // timeout — cevap gelmezse temizle
+
+let ws = null;
+
+// ── GİRİŞ ─────────────────────────────────────────────────────────────────
+function confirmLogout() {
+  const modal = document.getElementById('logout-modal');
+  modal.style.display = 'flex';
+}
+
+function closeLogoutModal() {
+  document.getElementById('logout-modal').style.display = 'none';
+}
+
+function logout() {
+  closeLogoutModal();
+  localStorage.removeItem('terminal_user');
+  if (ws) { ws.close(); ws = null; }
+  S.user = '';
+  S.scans = {};
+  S.isActive = false;
+  S.productsLoaded = false;
+  document.getElementById('main-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('username-input').value = '';
+  document.getElementById('username-input').focus();
+}
+
+function joinSession(name) {
+  name = name || document.getElementById('username-input').value.trim();
+  if (!name) return;
+  S.user = name;
+  localStorage.setItem('terminal_user', name);
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-screen').style.display = 'flex';
+  document.getElementById('topbar-user').textContent = name;
+  fetchSettings();
+  connectWS();
+  setTimeout(focusBarcodeInput, 100);
+}
+
+// ── WEBSOCKET ─────────────────────────────────────────────────────────────
+function clearScanHandler(reason) {
+  if (_scanResponseHandler && ws) {
+    ws.removeEventListener('message', _scanResponseHandler);
+  }
+  clearTimeout(_scanResponseTimer);
+  _scanResponseHandler = null;
+  _scanResponseTimer   = null;
+  document.getElementById('btn-send').disabled = false;
+  if (reason) showFeedback(reason, 'err');
+}
+
+let _wsReconnectTimer = null;
+
+function connectWS() {
+  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+  clearTimeout(_wsReconnectTimer);
+  clearScanHandler();
+
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}/ws/${encodeURIComponent(S.user)}`);
+
+  const badge = document.getElementById('conn-badge');
+  const stxt  = document.getElementById('status-text');
+
+  ws.onopen = () => {
+    badge.className = 'conn-badge connected';
+    stxt.textContent = 'Bağlı';
+    // Bağlantı geri gelince "Bağlantı kesildi" uyarısını temizle
+    const fb = document.getElementById('feedback');
+    if (fb.classList.contains('err')) {
+      fb.className = 'feedback idle';
+      fb.textContent = '';
+    }
+  };
+  ws.onclose = () => {
+    badge.className = 'conn-badge error';
+    stxt.textContent = 'Kesildi';
+    clearScanHandler('Bağlantı kesildi — tekrar denenecek.');
+    ws = null;
+    _wsReconnectTimer = setTimeout(connectWS, 3000);
+  };
+  ws.onerror = () => {
+    ws.close();
+  };
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    handleMsg(msg);
+  };
+}
+
+// ── AYARLAR (barkod kuralları) ────────────────────────────────────────────
+async function fetchSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    if (!res.ok) return;
+    const data = await res.json();
+    S.barcodeRules = data.barcode_rules || [];
+  } catch(e) {}
+}
+
+// ── ÜRÜN LİSTESİ (ilk bağlanışta bir kez) ────────────────────────────────
+async function fetchProducts() {
+  if (S.productsLoaded) return;
+  try {
+    const res = await fetch('/api/products');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.loaded) {
+      S.products = data.products;
+      S.productsLoaded = true;
+    }
+  } catch(e) {}
+}
+
+// ── BARKOD TEMİZLEME (settings.json kuralları — server ile senkron) ───────
+function stripBarcode(raw) {
+  let s = raw.trim().toUpperCase();
+  for (const rule of S.barcodeRules) {
+    const val = (rule.value || '').toUpperCase();
+    if (!val) continue;
+    if (rule.type === 'prefix' && s.startsWith(val)) s = s.slice(val.length);
+    else if (rule.type === 'suffix' && s.endsWith(val)) s = s.slice(0, -val.length);
+  }
+  return s;
+}
+
+// ── AUTOCOMPLETE SEARCH (manuel yazma için — tüm adayları döner) ─────────
+function searchProducts(query) {
+  if (!query || !S.productsLoaded) return [];
+  let q = stripBarcode(query);
+  if (q.length < 2) return [];
+
+  const seen = new Set();
+  const results = [];
+
+  const push = (bc, name) => {
+    if (!seen.has(bc)) { seen.add(bc); results.push({ barcode: bc, name }); }
+  };
+
+  // 1. Barkod tam eşleşme
+  if (S.products[q] !== undefined) push(q, S.products[q]);
+
+  // 2. Barkod q ile başlıyor
+  for (const [bc, name] of Object.entries(S.products))
+    if (bc.startsWith(q)) push(bc, name);
+
+  // 3. Barkod q içeriyor
+  for (const [bc, name] of Object.entries(S.products))
+    if (bc.includes(q)) push(bc, name);
+
+  // 4. Ürün adı q içeriyor
+  const ql = q.toLowerCase();
+  for (const [bc, name] of Object.entries(S.products))
+    if (name.toLowerCase().includes(ql)) push(bc, name);
+
+  return results.slice(0, 10);
+}
+
+function showSuggestionsDropdown(val) {
+  const dropdown = document.getElementById('suggestions-dropdown');
+  const results  = searchProducts(val);
+
+  if (!results.length) { hideSuggestionsDropdown(); return; }
+
+  const moreMsg = results.length === 10
+    ? `<div class="suggestion-count">İlk 10 sonuç gösteriliyor · daha fazla için yazmaya devam edin</div>` : '';
+
+  dropdown.innerHTML = results.map(r => `
+    <div class="suggestion-item" onclick="selectSuggestion('${r.barcode}')">
+      <span class="suggestion-bc">${r.barcode}</span>
+      <span class="suggestion-name">${r.name}</span>
+    </div>
+  `).join('') + moreMsg;
+
+  dropdown.classList.remove('hidden');
+}
+
+function hideSuggestionsDropdown() {
+  document.getElementById('suggestions-dropdown').classList.add('hidden');
+}
+
+function selectSuggestion(barcode) {
+  _matchedBarcode = barcode;
+  document.getElementById('barcode-input').value = barcode;
+  hideSuggestionsDropdown();
+  showSuggestion({ barcode, name: S.products[barcode] }, barcode);
+  focusQty();
+}
+
+// ── FUZZY MATCH ───────────────────────────────────────────────────────────
+function findMatch(query) {
+  if (!query || !S.productsLoaded) return null;
+  query = stripBarcode(query);
+
+  // 1. Tam eşleşme
+  if (S.products[query] !== undefined)
+    return { barcode: query, name: S.products[query] };
+
+  // 2. CSV barkodu tarananla bitiyor (önek eksik: ZT62063 → ZEB-ZT62063)
+  let candidates = Object.entries(S.products).filter(([bc]) => bc.endsWith(query));
+  if (candidates.length === 1) return { barcode: candidates[0][0], name: candidates[0][1] };
+  if (candidates.length > 1)  return { multi: true, count: candidates.length };
+
+  // 3. Taranan kod CSV barkodunun içinde (substring)
+  candidates = Object.entries(S.products).filter(([bc]) => bc.includes(query));
+  if (candidates.length === 1) return { barcode: candidates[0][0], name: candidates[0][1] };
+  if (candidates.length > 1)  return { multi: true, count: candidates.length };
+
+  return null;
+}
+
+let _inputDebounce = null;
+function onBarcodeInput() {
+  clearTimeout(_inputDebounce);
+  // inputmode kontrolünü şimdi yap — 60ms içinde değişebilir
+  const isManual = document.getElementById('barcode-input').getAttribute('inputmode') === 'text';
+  _inputDebounce = setTimeout(() => {
+    const input = document.getElementById('barcode-input');
+    const val   = input.value.trim();
+    if (!val) { hideSuggestion(); hideSuggestionsDropdown(); return; }
+
+    if (isManual) {
+      // Manuel mod: dropdown göster, input değerini değiştirme
+      showSuggestionsDropdown(val);
+      const match = findMatch(val);
+      _matchedBarcode = (match && !match.multi) ? match.barcode : null;
+      showSuggestion(match, val);
+    } else {
+      // Scanner mod: input'u hemen CSV barkoduna güncelle
+      hideSuggestionsDropdown();
+      resolveInput();
+    }
+  }, 60);
+}
+
+function resolveInput() {
+  const input = document.getElementById('barcode-input');
+  const val   = input.value.trim();
+  if (!val) { hideSuggestion(); return; }
+
+  const match = findMatch(val);
+
+  if (match && !match.multi) {
+    // Tek eşleşme: input'u hemen CSV barkoduna güncelle
+    _matchedBarcode  = match.barcode;
+    input.value      = match.barcode;
+  } else {
+    _matchedBarcode = null;
+  }
+  showSuggestion(match, val);
+}
+
+function showSuggestion(match, query) {
+  const el = document.getElementById('match-suggestion');
+  _matchedBarcode = null;
+  if (!match) {
+    if (query.length >= 4) {
+      el.className = 'match-suggestion no-match';
+      el.textContent = 'Eşleşme bulunamadı';
+    } else {
+      hideSuggestion();
+    }
+    return;
+  }
+  if (match.multi) {
+    el.className = 'match-suggestion multi';
+    el.textContent = `${match.count} olası eşleşme — daha fazla karakter girin`;
+    return;
+  }
+  _matchedBarcode = match.barcode;
+  el.className = 'match-suggestion';
+  el.innerHTML = `${match.name} <span class="match-barcode">${match.barcode}</span>`;
+}
+
+function hideSuggestion() {
+  document.getElementById('match-suggestion').className = 'match-suggestion hidden';
+  _matchedBarcode = null;
+}
+
+function handleMsg(msg) {
+  switch(msg.type) {
+    case 'state':
+      S.scans = msg.scans || {};
+      S.isActive = msg.session?.is_active || false;
+      renderList();
+      updateSessionWarn();
+      // Kolon haritası değiştiyse (veya hiç yüklenmemişse) ürün listesini yeniden çek
+      const newMapKey = JSON.stringify(msg.column_map || {});
+      if (!S.productsLoaded || S.lastColumnMapKey !== newMapKey) {
+        S.lastColumnMapKey = newMapKey;
+        S.productsLoaded = false;
+        fetchProducts();
+      }
+      break;
+
+    case 'scan_new':
+      const en = msg.entry;
+      if (!S.scans[en.barcode]) S.scans[en.barcode] = [];
+      // Tekrar eklenmemesi için id kontrolü
+      if (!S.scans[en.barcode].find(x => x.id === en.id)) {
+        S.scans[en.barcode].push(en);
+      }
+      renderList();
+      break;
+
+    case 'scan_ok':
+      // Onay zaten sendScan içinde işlendi; sadece listeye ekle
+      break;
+
+    case 'scan_err':
+      showFeedback(msg.message, 'err');
+      shakeInput();
+      break;
+
+    case 'scan_upd':
+      if (S.scans[msg.barcode]) {
+        const entry = S.scans[msg.barcode].find(x => x.id === msg.scan_id);
+        if (entry) entry.quantity = msg.new_qty;
+      }
+      renderList();
+      break;
+
+    case 'scan_del':
+      const bc = msg.barcode;
+      if (S.scans[bc]) {
+        S.scans[bc] = S.scans[bc].filter(x => x.id !== msg.scan_id);
+        if (!S.scans[bc].length) delete S.scans[bc];
+      }
+      renderList();
+      break;
+
+    case 'session':
+      S.isActive = msg.is_active;
+      updateSessionWarn();
+      if (!msg.is_active) showFeedback('Sayım sona erdi.', 'err');
+      break;
+
+    case 'history_update':
+      // Terminal için ekstra işlem gerekmez
+      break;
+  }
+}
+
+// ── BARKOD GÖNDER ─────────────────────────────────────────────────────────
+function focusQty() {
+  const qty = document.getElementById('qty-input');
+  qty.focus();
+  qty.select();
+}
+
+function resolveAndFocusQty() {
+  clearTimeout(_inputDebounce);
+  hideSuggestionsDropdown();
+  resolveInput();
+  focusQty();
+}
+
+async function sendScan() {
+  if (!S.isActive) {
+    showFeedback('Sayım aktif değil.', 'err');
+    return;
+  }
+
+  // Match henüz çözülmediyse son bir kez dene (DataWedge hız güvencesi)
+  if (!_matchedBarcode) resolveInput();
+  const barcode = _matchedBarcode || document.getElementById('barcode-input').value.trim();
+  const qty     = parseInt(document.getElementById('qty-input').value) || 1;
+
+  if (!barcode) {
+    document.getElementById('barcode-input').focus();
+    return;
+  }
+  if (qty < 1) {
+    showFeedback('Adet en az 1 olmalı.', 'err');
+    return;
+  }
+
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    showFeedback('Sunucuya bağlı değil — yeniden bağlanılıyor.', 'err');
+    return;
+  }
+
+  document.getElementById('btn-send').disabled = true;
+
+  ws.send(JSON.stringify({
+    type: 'scan',
+    barcode,
+    quantity: qty,
+    user: S.user,
+  }));
+
+  // Önceden bekleyen handler varsa temizle (art arda hızlı scan)
+  clearScanHandler();
+
+  _scanResponseHandler = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'scan_ok') {
+      clearScanHandler();
+      showFeedback(`${msg.entry.product_name} — ${msg.entry.quantity} adet kaydedildi`, 'ok');
+      clearInput();
+    } else if (msg.type === 'scan_err') {
+      clearScanHandler();
+      showFeedback(msg.message, 'err');
+      shakeInput();
+    } else {
+      handleMsg(msg);
+    }
+  };
+  ws.addEventListener('message', _scanResponseHandler);
+
+  // 5 saniye içinde cevap gelmezse handler'ı temizle
+  _scanResponseTimer = setTimeout(() => {
+    clearScanHandler('Sunucu yanıt vermedi.');
+  }, 5000);
+}
+
+function clearInput() {
+  document.getElementById('barcode-input').value = '';
+  document.getElementById('qty-input').value = '1';
+  hideSuggestion();
+  hideSuggestionsDropdown();
+  document.getElementById('barcode-input').focus();
+}
+
+// ── ADET GÜNCELLE ────────────────────────────────────────────────────────
+async function updateScanQty(scanId, barcode) {
+  const input = document.getElementById(`qty-edit-${scanId}`);
+  const newQty = parseInt(input.value);
+  if (!newQty || newQty < 1) {
+    input.style.borderColor = 'var(--danger)';
+    return;
+  }
+  const res = await fetch(`/api/scan/${scanId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ quantity: newQty, user: S.user }),
+  });
+  if (!res.ok) {
+    const d = await res.json();
+    showFeedback(d.detail || 'Güncellenemedi', 'err');
+  }
+}
+
+// ── SİLME ─────────────────────────────────────────────────────────────────
+let _deleteTimer = null;
+
+function deleteScan(scanId) {
+  // Zaten onay bekleyen başka bir silme varsa iptal et
+  cancelAllDeletes();
+
+  const actionsEl = document.getElementById(`scan-actions-${scanId}`);
+  if (!actionsEl) return;
+
+  actionsEl.innerHTML = `
+    <div class="delete-confirm-row">
+      <span class="delete-confirm-label">Silinsin mi?</span>
+      <button class="btn-del-cancel" onclick="cancelDelete('${scanId}')">Hayır</button>
+      <button class="btn-del-confirm" onclick="confirmDelete('${scanId}')">Evet, Sil</button>
+    </div>
+  `;
+
+  // 4 saniye sonra otomatik iptal
+  _deleteTimer = setTimeout(() => cancelDelete(scanId), 4000);
+}
+
+function confirmDelete(scanId) {
+  clearTimeout(_deleteTimer);
+  ws.send(JSON.stringify({ type: 'delete', scan_id: scanId, user: S.user }));
+}
+
+function cancelDelete(scanId) {
+  clearTimeout(_deleteTimer);
+  // Kartı yeniden render et — orijinal action row'una döner
+  renderList();
+}
+
+function cancelAllDeletes() {
+  clearTimeout(_deleteTimer);
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────
+function renderList() {
+  const area = document.getElementById('list-area');
+
+  if (S.tab === 'mine') {
+    // Sadece kendi kayıtları, en yeni üstte
+    const mine = [];
+    for (const entries of Object.values(S.scans)) {
+      entries.filter(e => e.user === S.user).forEach(e => mine.push(e));
+    }
+    mine.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+
+    if (!mine.length) {
+      area.innerHTML = `<div class="empty-state">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        Henüz kayıt yok
+      </div>`;
+      return;
+    }
+    area.innerHTML = mine.map(e => {
+      const time = new Date(e.timestamp).toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+      return `
+        <div class="scan-card">
+          <div class="scan-card-top">
+            <div class="scan-card-info">
+              <span class="scan-name">${e.product_name}</span>
+              <span class="scan-barcode">${e.barcode}</span>
+            </div>
+            <span class="scan-qty-badge" id="qty-badge-${e.id}">${e.quantity}</span>
+          </div>
+          <div class="scan-meta">
+            <span>${time}</span>
+            <span class="scan-meta-sep">·</span>
+            <span>${e.user}</span>
+          </div>
+          <div class="scan-divider"></div>
+          <div class="scan-actions" id="scan-actions-${e.id}">
+            <input class="qty-edit-input" type="number" id="qty-edit-${e.id}"
+              value="${e.quantity}" min="1" max="9999" />
+            <button class="btn-update" onclick="updateScanQty('${e.id}', '${e.barcode}')">Güncelle</button>
+            <button class="btn-del" onclick="deleteScan('${e.id}')">SİL</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } else {
+    // Genel — barkod bazında toplam
+    const summary = Object.entries(S.scans).map(([barcode, entries]) => ({
+      barcode,
+      product_name: entries[0]?.product_name || '—',
+      total: entries.reduce((s, e) => s + e.quantity, 0),
+      users: [...new Set(entries.map(e => e.user))],
+    }));
+
+    if (!summary.length) {
+      area.innerHTML = `<div class="empty-state">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+        </svg>
+        Henüz sayım yok
+      </div>`;
+      return;
+    }
+    area.innerHTML = summary.map(row => `
+      <div class="all-summary-card">
+        <div class="all-summary-info">
+          <div class="all-summary-name">${row.product_name}</div>
+          <div class="all-summary-meta">${row.barcode} &middot; ${row.users.join(', ')}</div>
+        </div>
+        <div class="total-qty-big">${row.total}</div>
+      </div>
+    `).join('');
+  }
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+function switchTab(tab, btn) {
+  S.tab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+// ── FEEDBACK ──────────────────────────────────────────────────────────────
+let _feedbackTimer = null;
+function showFeedback(msg, type) {
+  const el = document.getElementById('feedback');
+  el.textContent = msg;
+  el.className = `feedback ${type}`;
+  clearTimeout(_feedbackTimer);
+  if (type === 'ok') {
+    _feedbackTimer = setTimeout(() => { el.className = 'feedback idle'; el.textContent = ''; }, 2500);
+  }
+}
+
+function shakeInput() {
+  const el = document.getElementById('barcode-input');
+  el.classList.add('error');
+  setTimeout(() => el.classList.remove('error'), 400);
+}
+
+function updateSessionWarn() {
+  document.getElementById('session-warn').style.display = S.isActive ? 'none' : 'block';
+  document.getElementById('btn-send').disabled = !S.isActive;
+  document.getElementById('barcode-input').disabled = !S.isActive;
+  document.getElementById('qty-input').disabled = !S.isActive;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+// Daha önce giriş yapıldıysa otomatik bağlan
+const _savedUser = localStorage.getItem('terminal_user');
+if (_savedUser) {
+  joinSession(_savedUser);
+} else {
+  document.getElementById('username-input').focus();
+}
+
+// Sayfa görünür olduğunda (arka plandan dönünce) barkod input'a focus ver
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && S.user) focusBarcodeInput();
+});
+
+// Ekrana tıklanınca barkod input dışına gidilmişse geri al
+// barcode-input dahil olmak üzere belirli elemanlar hariç
+document.addEventListener('click', (e) => {
+  const ignoreIds     = ['qty-input', 'btn-send', 'barcode-input'];
+  const ignoreClasses = ['btn-del', 'btn-update', 'qty-edit-input', 'btn-del-confirm', 'btn-del-cancel', 'delete-confirm-label'];
+  const shouldIgnore  = ignoreIds.includes(e.target.id) ||
+                        ignoreClasses.some(cls => e.target.classList.contains(cls));
+  if (S.user && S.isActive && !shouldIgnore) {
+    focusBarcodeInput(); // inputmode=none ile focus
+  }
+});
+
+function focusBarcodeInput() {
+  const el = document.getElementById('barcode-input');
+  if (el && !el.disabled) {
+    el.setAttribute('inputmode', 'none'); // programatik focus → klavye açılmasın
+    el.focus();
+  }
+}
+
+// Kullanıcı elle dokunursa klavyeyi aç
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('barcode-input');
+  el.addEventListener('touchstart', () => {
+    el.setAttribute('inputmode', 'text');
+    if (document.activeElement === el) {
+      // Zaten focus'taysa blur + refocus — klavyeyi zorla tetikle
+      el.blur();
+      setTimeout(() => el.focus(), 100);
+    }
+    // Focus'ta değilse tarayıcı click'te zaten focus verecek, inputmode=text ayarlı
+  }, { passive: true });
+
+  // Blur: sadece dropdown kapat, inputmode'u DOKUNMA — focusBarcodeInput() zaten yönetir
+  el.addEventListener('blur', () => {
+    setTimeout(() => hideSuggestionsDropdown(), 300);
+  });
+});
+</script>
+</body>
+</html>
