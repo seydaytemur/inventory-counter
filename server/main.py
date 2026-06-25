@@ -154,8 +154,11 @@ async def set_column_map(body: dict):
         if alt_barcode_col and row.get(alt_barcode_col, "").strip()
     ) if alt_barcode_col else 0
 
-    # Terminallere ürün listesinin güncellendiğini bildir
-    await app_state.broadcast(app_state.get_full_state())
+    # Terminallere ürün listesinin güncellendiğini bildir (scans/history sıfırlanmış halde)
+    state_msg = app_state.get_full_state()
+    state_msg["scans"] = {}
+    state_msg["history"] = []
+    await app_state.broadcast(state_msg)
 
     return {
         "loaded": len(products),
@@ -386,11 +389,8 @@ async def bulk_delete_scan(req: BulkDeleteRequest):
     if not success:
         raise HTTPException(400, message)
 
+    # Tam state broadcast et — scans ve history birlikte güncellenir
     await app_state.broadcast(app_state.get_full_state())
-    await app_state.broadcast({
-        "type": WsMessageType.HISTORY,
-        "history": app_state.session.history[-1],
-    })
 
     return {"status": "ok", "deleted_qty": deleted_qty}
 
@@ -461,7 +461,7 @@ async def websocket_endpoint(websocket: WebSocket, user: str):
     app_state.register_ws(user, websocket)
 
     # Bağlanan kullanıcıya tam mevcut state'i gönder
-    await websocket.send_json(app_state.get_full_state())
+    await websocket.send_json(app_state.get_full_state(for_admin=(user == "admin")))
 
     # Diğer herkese yeni kullanıcı bildirimi
     await app_state.broadcast({

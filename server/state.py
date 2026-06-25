@@ -6,13 +6,17 @@ Eş zamanlı barkod yazma işlemleri asyncio.Lock ile sıralanır.
 import asyncio
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+
+TZ_TR = timezone(timedelta(hours=3))
 from pathlib import Path
 from typing import Optional
 from models import CountSession, ScanEntry, HistoryEntry, WsMessageType
 
 
 SETTINGS_FILE = Path(__file__).parent / "settings.json"
+SESSION_FILE  = Path(__file__).parent / "session.json"
+SESSION_TMP   = Path(__file__).parent / "session.tmp"
 
 DEFAULT_SETTINGS: dict = {
     "delimiter": "auto",          # auto | ; | , | \t | |
@@ -23,7 +27,7 @@ DEFAULT_SETTINGS: dict = {
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(TZ_TR).isoformat()
 
 
 def _uid() -> str:
@@ -38,6 +42,7 @@ class AppState:
         self._connections: dict[str, set] = {}
         self._all_ws: set = set()
         self._alt_to_primary: dict = {}  # alt barkod → birincil barkod
+        self._load_session()             # crash recovery: varsa önceki oturumu yükle
 
     # ── Ayarlar ──────────────────────────────────────────────────────────────
 
@@ -48,6 +53,40 @@ class AppState:
             except Exception:
                 pass
         return dict(DEFAULT_SETTINGS)
+
+    # ── Oturum kalıcılığı ────────────────────────────────────────────────────
+
+    def _load_session(self):
+        """Sunucu başlarken session.json varsa yükle (crash recovery)."""
+        if not SESSION_FILE.exists():
+            return
+        try:
+            data = json.loads(SESSION_FILE.read_text(encoding="utf-8"))
+            self.session.is_active    = data.get("is_active", False)
+            self.session.started_at   = data.get("started_at")
+            self.session.finished_at  = data.get("finished_at")
+            self.session.scans        = data.get("scans", {})
+            self.session.history      = data.get("history", [])
+            self.session.column_map   = data.get("column_map", {})
+            self.session.product_list = data.get("product_list", {})
+            self._alt_to_primary      = data.get("alt_to_primary", {})
+        except Exception:
+            pass  # bozuk dosya → temiz başlangıç
+
+    def _persist(self):
+        """Mevcut oturum verisini diske atomik olarak yaz."""
+        data = {
+            "is_active":      self.session.is_active,
+            "started_at":     self.session.started_at,
+            "finished_at":    self.session.finished_at,
+            "scans":          self.session.scans,
+            "history":        self.session.history,
+            "column_map":     self.session.column_map,
+            "product_list":   self.session.product_list,
+            "alt_to_primary": self._alt_to_primary,
+        }
+        SESSION_TMP.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        SESSION_TMP.replace(SESSION_FILE)  # atomik rename
 
     def save_settings(self, new_settings: dict):
         self.settings = new_settings
@@ -77,6 +116,7 @@ class AppState:
         self.session.column_map = column_map
         # alternatif barkod → birincil barkod eşlemesi (export normalizasyonu için)
         self._alt_to_primary: dict = alt_to_primary or {}
+        self._persist()  # slim product_list'i diske kaydet
 
     def lookup(self, barcode: str) -> Optional[tuple[str, dict]]:
         """
@@ -124,10 +164,12 @@ class AppState:
         self.session.finished_at = None
         self.session.scans = {}
         self.session.history = []
+        self._persist()
 
     def finish_session(self):
         self.session.is_active = False
         self.session.finished_at = _now()
+        self._persist()
 
     # ── Barkod işlemleri (Lock altında çalışır) ───────────────────────────────
 
@@ -178,6 +220,7 @@ class AppState:
             )
             self.session.history.append(hist.model_dump())
 
+        self._persist()
         return True, "OK", entry
 
     async def update_scan_qty(self, scan_id: str, new_qty: int, user: str) -> tuple[bool, str, Optional[dict]]:
@@ -186,6 +229,7 @@ class AppState:
             for barcode, entries in self.session.scans.items():
                 for e in entries:
                     if e["id"] == scan_id:
+                        old_qty = e["quantity"]
                         e["quantity"] = new_qty
                         hist = HistoryEntry(
                             id=_uid(),
@@ -194,10 +238,12 @@ class AppState:
                             barcode=barcode,
                             product_name=e["product_name"],
                             quantity=new_qty,
+                            previous_quantity=old_qty,
                             timestamp=_now(),
                             related_scan_id=scan_id,
                         )
                         self.session.history.append(hist.model_dump())
+                        self._persist()
                         return True, "OK", e
         return False, "Kayıt bulunamadı.", None
 
@@ -249,6 +295,7 @@ class AppState:
             )
             self.session.history.append(hist.model_dump())
 
+        self._persist()
         return True, "OK", deleted_qty
 
     async def delete_scan(self, scan_id: str, user: str) -> tuple[bool, str, Optional[dict]]:
@@ -256,6 +303,7 @@ class AppState:
         Belirli bir scan kaydını sil.
         Returns: (success, message, deleted_entry)
         """
+        deleted = None
         async with self._lock:
             for barcode, entries in self.session.scans.items():
                 for i, e in enumerate(entries):
@@ -275,8 +323,13 @@ class AppState:
                             related_scan_id=scan_id,
                         )
                         self.session.history.append(hist.model_dump())
-                        return True, "OK", deleted
+                        break
+                if deleted:
+                    break
 
+        if deleted:
+            self._persist()
+            return True, "OK", deleted
         return False, "Kayıt bulunamadı.", None
 
     async def undo_history(self, history_id: str, user: str) -> tuple[bool, str]:
@@ -301,6 +354,16 @@ class AppState:
                         if e["id"] == scan_id:
                             entries.pop(i)
                             break
+
+            elif action == "edit":
+                # düzenlemeyi geri al → eski adete döndür
+                prev_qty = target.get("previous_quantity")
+                if prev_qty is not None:
+                    for entries in self.session.scans.values():
+                        for e in entries:
+                            if e["id"] == scan_id:
+                                e["quantity"] = prev_qty
+                                break
 
             elif action == "delete":
                 # silmeyi geri al → scan'i yeniden ekle
@@ -340,6 +403,7 @@ class AppState:
             )
             self.session.history.append(hist.model_dump())
 
+        self._persist()
         return True, "OK"
 
     # ── Özet / export ────────────────────────────────────────────────────────
@@ -364,17 +428,23 @@ class AppState:
             summary.append(row)
         return summary
 
-    def get_full_state(self) -> dict:
-        """WebSocket STATE mesajı için tam snapshot"""
+    def get_full_state(self, for_admin: bool = False) -> dict:
+        """WebSocket STATE mesajı için tam snapshot.
+        Sayım aktif değilse terminal scans/history boş alır —
+        bitmiş sayımın verisi terminalde görünmemeli.
+        Admin her zaman tam veriyi alır.
+        """
+        active = self.session.is_active
+        include_data = active or for_admin
         return {
             "type": WsMessageType.STATE,
             "session": {
-                "is_active": self.session.is_active,
+                "is_active": active,
                 "started_at": self.session.started_at,
                 "finished_at": self.session.finished_at,
             },
-            "scans": self.session.scans,
-            "history": self.session.history,
+            "scans":   self.session.scans if include_data else {},
+            "history": self.session.history if include_data else [],
             "connected_users": list(self._connections.keys()),
             "column_map": self.session.column_map,
         }

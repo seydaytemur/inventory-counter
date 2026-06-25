@@ -38,34 +38,44 @@
   .topbar {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 0 24px;
-    height: 56px;
+    gap: 18px;
+    padding: 0 28px;
+    height: 64px;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
     z-index: 100;
   }
-  .topbar-title { font-size: 15px; font-weight: 700; letter-spacing: .02em; color: var(--text); }
+  .topbar-divider {
+    width: 1px; height: 24px; background: var(--border); flex-shrink: 0;
+  }
+  .topbar-section-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 5px 13px; border-radius: 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+    font-size: 13px; font-weight: 600; color: var(--text);
+    letter-spacing: .01em;
+  }
+  .topbar-title { font-size: 16px; font-weight: 700; letter-spacing: .02em; color: var(--text); }
   .topbar-title span { color: var(--accent); }
 
   .badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 5px 13px; border-radius: 8px; font-size: 13px; font-weight: 600;
   }
   .badge-active  { background: #0d2e1a; color: var(--success); border: 1px solid #1a5c35; }
   .badge-idle    { background: #1e1a2e; color: var(--muted);   border: 1px solid var(--border); }
-  .badge-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .badge-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 
-  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
   .users-pill {
-    display: flex; align-items: center; gap: 6px;
-    padding: 4px 12px; border-radius: 20px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 14px; border-radius: 8px;
     background: var(--surface2); border: 1px solid var(--border);
-    font-size: 12px; color: var(--muted);
+    font-size: 13px; color: var(--muted);
   }
-  .users-pill strong { color: var(--text); }
+  .users-pill strong { color: var(--text); font-size: 14px; }
 
   /* ── MAIN LAYOUT ── */
   .main {
@@ -74,7 +84,7 @@
     grid-template-rows: auto 1fr;
     gap: 0;
     flex: 1;
-    height: calc(100vh - 56px);
+    height: calc(100vh - 64px);
     overflow: hidden;
   }
 
@@ -267,54 +277,65 @@
     overflow: hidden;
   }
   .history-header {
-    padding: 14px 16px;
+    padding: 12px 16px;
     border-bottom: 1px solid var(--border);
-    font-size: 13px; font-weight: 700;
+    font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted);
     display: flex; align-items: center; justify-content: space-between;
   }
   .history-list {
     flex: 1;
     overflow-y: auto;
-    padding: 10px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 2px;
   }
   .history-item {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    padding: 10px 8px;
     font-size: 12px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 5px;
   }
+  .history-item:last-child { border-bottom: none; }
   .history-item-top {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
   }
   .history-action {
-    font-size: 10px; font-weight: 700; letter-spacing: .06em;
-    text-transform: uppercase; padding: 2px 7px; border-radius: 4px;
+    font-size: 9px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; padding: 2px 6px; border-radius: 3px;
+    flex-shrink: 0;
   }
-  .action-add    { background: #0d2e1a; color: var(--success); }
-  .action-delete { background: #2e0d0d; color: var(--danger);  }
-  .action-undo   { background: #1a1a2e; color: var(--accent2); }
+  .action-add    { background: #0d2e1a; color: #4ade80; border: 1px solid #14532d; }
+  .action-delete { background: #2e0d0d; color: #f87171; border: 1px solid #7f1d1d; }
+  .action-undo   { background: #1e1b2e; color: #a5b4fc; border: 1px solid #312e5c; }
+  .action-edit   { background: #1a1a0d; color: #fbbf24; border: 1px solid #451a03; }
 
-  .history-item-name { color: var(--text); font-weight: 500; }
-  .history-item-meta { color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; }
+  .history-item-name {
+    color: var(--text); font-weight: 500; font-size: 12px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .history-item-meta {
+    color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px;
+  }
+  .history-meta-label { color: #555; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; margin-right: 2px; }
 
   .undo-btn {
-    font-size: 11px; padding: 3px 9px; margin-top: 4px;
+    font-size: 11px; padding: 3px 9px; margin-top: 2px;
     align-self: flex-end;
   }
   .undo-confirm-row {
     display: flex; align-items: center; gap: 6px; margin-top: 6px;
-    padding: 6px 8px; border-radius: 6px;
-    background: #1a1400; border: 1px solid #4d3c00;
+    padding: 5px 8px; border-radius: 4px;
+    background: #111; border: 1px solid var(--border);
     animation: slide-in .15s ease;
   }
-  .undo-confirm-label { flex: 1; font-size: 11px; color: var(--warning); font-weight: 600; }
+  .undo-confirm-label { flex: 1; font-size: 11px; color: var(--muted); font-weight: 500; }
   .btn-undo-confirm {
     padding: 3px 10px; border-radius: 5px; border: none;
     background: var(--warning); color: #1a0f00;
@@ -368,6 +389,44 @@
   .modal p  { font-size: 14px; color: var(--muted); }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
+  /* ── ÖZET MODAL ── */
+  .summary-modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 32px; width: 480px; max-width: 95vw;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .summary-header {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .summary-icon {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: #0a1f14; border: 2px solid var(--success);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .summary-title { font-size: 18px; font-weight: 700; color: var(--text); }
+  .summary-subtitle { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .summary-divider { height: 1px; background: var(--border); }
+  .summary-stats {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;
+  }
+  .summary-stat {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .summary-stat-value { font-size: 22px; font-weight: 700; color: var(--text); }
+  .summary-stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .summary-users { display: flex; flex-direction: column; gap: 8px; }
+  .summary-user-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface2); border-radius: 8px; padding: 10px 14px;
+  }
+  .summary-user-name { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+  .summary-user-bar-wrap { flex: 2; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .summary-user-bar { height: 100%; background: var(--accent); border-radius: 3px; transition: width .4s; }
+  .summary-user-qty { font-size: 13px; color: var(--muted); min-width: 40px; text-align: right; }
+
   /* ── SETTINGS MODAL ── */
   .settings-modal {
     background: var(--surface); border: 1px solid var(--border);
@@ -420,21 +479,23 @@
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <div class="topbar-title">Stok Sayım <span>/ Yönetim</span></div>
+  <img src="/static/assets/Luna_Group_Logo.png" alt="Luna Group" style="height:46px;object-fit:contain;filter:brightness(1.15) drop-shadow(0 0 6px rgba(255,255,255,0.15));" />
+  <div class="topbar-divider"></div>
+  <div class="topbar-section-badge">Yönetim</div>
   <div id="session-badge" class="badge badge-idle">
     <span class="badge-dot"></span> Bekliyor
   </div>
   <div class="topbar-right">
     <div class="users-pill">
-      👥 <strong id="user-count">0</strong> terminal bağlı
+      <strong id="user-count">0</strong> terminal bağlı
     </div>
-    <button class="btn btn-ghost btn-sm" onclick="openSettingsModal()" title="Ayarlar">⚙ Ayarlar</button>
-    <div id="ws-status" style="font-size:12px;color:var(--muted);">⬤ bağlanıyor</div>
+    <button class="btn btn-ghost" onclick="openSettingsModal()" title="Ayarlar" style="font-size:13px;padding:6px 16px;">Ayarlar</button>
+    <div id="ws-status" style="font-size:13px;color:var(--muted);padding:5px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);">⬤ bağlanıyor</div>
   </div>
 </header>
 
 <!-- SETUP PANEL -->
-<div id="setup-panel" class="setup-panel">
+<div id="setup-panel" class="setup-panel hidden">
   <!-- Adım 1: CSV yükle -->
   <div class="setup-step">
     <h3>1 — Ürün Listesini Yükle</h3>
@@ -539,7 +600,7 @@
   <!-- Sağ: History -->
   <div class="history-sidebar">
     <div class="history-header">
-      <span>📋 Aksiyon Geçmişi</span>
+      <span>Aksiyon Geçmişi</span>
       <span id="history-count" style="font-size:11px;color:var(--muted)">0 kayıt</span>
     </div>
     <div class="history-list" id="history-list">
@@ -599,11 +660,118 @@
 <!-- Sayımı Bitir Modal -->
 <div class="modal-overlay" id="finish-modal">
   <div class="modal">
-    <h2>Sayımı Bitir</h2>
-    <p>Sayım kapatılacak ve terminaller barkod okutamayacak. Devam etmek istiyor musun?</p>
+
+    <!-- CSV alınmadı uyarısı -->
+    <div id="finish-csv-warn" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="width:36px;height:36px;border-radius:50%;background:#2d1f0a;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">⚠</div>
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text)">CSV çıktısı alınmadı</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:2px">Sayımı bitirmeden önce veriyi dışa aktarmak ister misiniz?</div>
+        </div>
+      </div>
+      <div style="height:1px;background:var(--border);margin-bottom:16px"></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="exportCSVAndClose()">
+          ⬇ CSV İndir ve Sayımı Bitir
+        </button>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center;color:var(--muted)" onclick="finishSession()">
+          CSV almadan devam et
+        </button>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="closeFinishModal()">
+          Vazgeç
+        </button>
+      </div>
+    </div>
+
+    <!-- Normal onay -->
+    <div id="finish-csv-ok">
+      <h2 style="margin-bottom:8px">Sayımı Bitir</h2>
+      <p>Sayım kapatılacak ve terminaller barkod okutamayacak. Devam etmek istiyor musun?</p>
+      <div class="modal-actions" style="margin-top:8px">
+        <button class="btn btn-ghost" onclick="closeFinishModal()">Vazgeç</button>
+        <button class="btn btn-danger" onclick="finishSession()">Evet, Bitir</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Bulk Delete Onay Modal -->
+<div class="modal-overlay" id="bulk-delete-modal">
+  <div class="modal" style="width:320px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="width:36px;height:36px;border-radius:50%;background:#2d0a0a;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🗑</div>
+      <div>
+        <div style="font-size:15px;font-weight:600;color:var(--text)">Kaydı Sil</div>
+        <div id="bulk-delete-desc" style="font-size:13px;color:var(--muted);margin-top:2px"></div>
+      </div>
+    </div>
+    <div style="height:1px;background:var(--border);margin-bottom:16px"></div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeFinishModal()">Vazgeç</button>
-      <button class="btn btn-danger" onclick="finishSession()">Evet, Bitir</button>
+      <button class="btn btn-ghost" onclick="closeBulkDeleteModal()">Vazgeç</button>
+      <button class="btn btn-danger" onclick="executeBulkDelete()">Evet, Sil</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sayım Özeti Modal -->
+<div class="modal-overlay" id="summary-modal">
+  <div class="summary-modal">
+
+    <div class="summary-header">
+      <div class="summary-icon">✓</div>
+      <div>
+        <div class="summary-title">Sayım Tamamlandı</div>
+        <div class="summary-subtitle" id="summary-duration"></div>
+      </div>
+    </div>
+
+    <div class="summary-divider"></div>
+
+    <div class="summary-stats">
+      <div class="summary-stat">
+        <div class="summary-stat-value" id="summary-items">—</div>
+        <div class="summary-stat-label">Farklı Ürün</div>
+      </div>
+      <div class="summary-stat">
+        <div class="summary-stat-value" id="summary-qty">—</div>
+        <div class="summary-stat-label">Toplam Adet</div>
+      </div>
+      <div class="summary-stat">
+        <div class="summary-stat-value" id="summary-users-count">—</div>
+        <div class="summary-stat-label">Sayımcı</div>
+      </div>
+    </div>
+
+    <div class="summary-divider"></div>
+
+    <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:-4px">Kullanıcı Katkıları</div>
+    <div class="summary-users" id="summary-users-list"></div>
+
+    <div class="summary-divider"></div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeSummaryModal()">Kapat</button>
+      <button class="btn btn-primary" onclick="exportCSV(); closeSummaryModal()">⬇ CSV İndir</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Veri Yok Uyarı Modal -->
+<div class="modal-overlay" id="no-data-modal">
+  <div class="modal" style="width:340px;gap:20px">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="width:42px;height:42px;border-radius:50%;background:#2e0d0d;border:1px solid #7f1d1d;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">!</div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text)">Sayım Verisi Bulunamadı</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px">Henüz hiçbir ürün sayılmadı. CSV indirmek için önce bir sayım başlatın ve ürün barkodlarını okutun.</div>
+      </div>
+    </div>
+    <div style="height:1px;background:var(--border)"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeNoDataModal()">Tamam</button>
     </div>
   </div>
 </div>
@@ -617,6 +785,7 @@ const state = {
   scans: {},        // barcode -> [ScanEntry]
   history: [],
   isActive: false,
+  session: {},
   connectedUsers: [],
   columnMap: {},
   currentUser: 'admin',   // admin paneli için sabit
@@ -664,6 +833,7 @@ function handleWsMessage(msg) {
       state.scans = msg.scans || {};
       state.history = msg.history || [];
       state.isActive = msg.session?.is_active || false;
+      state.session  = msg.session || {};
       state.connectedUsers = msg.connected_users || [];
       state.columnMap = msg.column_map || {};
       renderAll();
@@ -688,9 +858,32 @@ function handleWsMessage(msg) {
 
     case 'scan_del':
       const bc = msg.barcode;
-      if (state.scans[bc]) {
-        state.scans[bc] = state.scans[bc].filter(x => x.id !== msg.scan_id);
-        if (!state.scans[bc].length) delete state.scans[bc];
+      if (msg.scan_id === 'bulk') {
+        // Bulk delete: remaining_total'e göre güncelle
+        if (state.scans[bc]) {
+          if (msg.remaining_total <= 0) {
+            delete state.scans[bc];
+          } else {
+            // Toplam adet farkını en eski kayıtlardan düş
+            let toRemove = (state.scans[bc].reduce((s, e) => s + e.quantity, 0)) - msg.remaining_total;
+            for (let i = 0; i < state.scans[bc].length && toRemove > 0; i++) {
+              const entry = state.scans[bc][i];
+              if (entry.quantity <= toRemove) {
+                toRemove -= entry.quantity;
+                state.scans[bc].splice(i, 1);
+                i--;
+              } else {
+                entry.quantity -= toRemove;
+                toRemove = 0;
+              }
+            }
+          }
+        }
+      } else {
+        if (state.scans[bc]) {
+          state.scans[bc] = state.scans[bc].filter(x => x.id !== msg.scan_id);
+          if (!state.scans[bc].length) delete state.scans[bc];
+        }
       }
       renderScanTables();
       break;
@@ -702,9 +895,15 @@ function handleWsMessage(msg) {
 
     case 'session':
       state.isActive = msg.is_active;
+      if (msg.is_active) {
+        state.scans = {};
+        state.history = [];
+        renderAll();
+        toast('▶ Sayım başladı', 'info');
+      } else {
+        toast('■ Sayım tamamlandı', 'info');
+      }
       updateSessionUI();
-      if (msg.is_active) toast('▶ Sayım başladı', 'info');
-      else toast('■ Sayım tamamlandı', 'info');
       break;
 
     case 'users':
@@ -758,11 +957,12 @@ function renderScanTables() {
       const deleteRows = Object.entries(userTotals).map(([u, qty]) => `
           <div class="bulk-del-row"
             data-barcode="${row.barcode.replace(/"/g,'&quot;')}"
-            data-user="${u.replace(/"/g,'&quot;')}">
+            data-user="${u.replace(/"/g,'&quot;')}"
+            data-product="${row.product_name.replace(/"/g,'&quot;')}">
             <span class="bulk-del-label" title="${u}">${u}</span>
             <input class="bulk-del-input" type="number"
-              value="${qty}" min="1" max="${qty}" />
-            <button class="bulk-del-btn" onclick="bulkDelete(this)">Sil</button>
+              value="1" min="1" max="${qty}" title="Maks: ${qty}" />
+            <button class="bulk-del-btn" onclick="confirmBulkDelete(this)">Sil</button>
           </div>`
       ).join('');
 
@@ -794,24 +994,26 @@ function renderHistory() {
   // En yeni üstte
   const reversed = [...state.history].reverse();
   list.innerHTML = reversed.map(h => {
-    const time = new Date(h.timestamp).toLocaleTimeString('tr-TR');
-    const actionLabel = { add: 'Eklendi', delete: 'Silindi', undo: 'Geri Alındı', edit: 'Düzenlendi' }[h.action] || h.action;
-    const actionClass = { add: 'action-add', delete: 'action-delete', undo: 'action-undo', edit: 'action-undo' }[h.action] || '';
+    const dt = new Date(h.timestamp);
+    const time = dt.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const date = dt.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' });
+    const actionLabel = { add: 'Ekleme', delete: 'Silme', undo: 'Geri Alma', edit: 'Düzenleme' }[h.action] || h.action;
+    const actionClass = { add: 'action-add', delete: 'action-delete', undo: 'action-undo', edit: 'action-edit' }[h.action] || '';
     const canUndo = h.action !== 'undo';
     return `
       <div class="history-item">
         <div class="history-item-top">
           <span class="history-action ${actionClass}">${actionLabel}</span>
-          <span style="color:var(--muted);font-size:11px">${time}</span>
+          <span style="color:#444;font-size:10px;font-family:var(--font-mono)">${date} ${time}</span>
         </div>
-        <div class="history-item-name">${h.product_name}</div>
+        <div class="history-item-name" title="${h.product_name}">${h.product_name}</div>
         <div class="history-item-meta">
-          <span>👤 ${h.user}</span>
-          <span>🔢 ×${h.quantity}</span>
-          <span style="font-family:var(--font-mono);font-size:11px">${h.barcode}</span>
+          <span><span class="history-meta-label">Kullanıcı</span>${h.user}</span>
+          <span><span class="history-meta-label">Adet</span>${h.quantity}</span>
+          <span style="font-family:var(--font-mono);color:#444">${h.barcode}</span>
         </div>
         ${canUndo ? `<div id="undo-area-${h.id}">
-          <button class="btn btn-ghost btn-sm undo-btn" onclick="confirmUndo('${h.id}')">↩ Geri Al</button>
+          <button class="btn btn-ghost btn-sm undo-btn" onclick="confirmUndo('${h.id}')">Geri Al</button>
         </div>` : ''}
       </div>
     `;
@@ -834,6 +1036,7 @@ function updateSessionUI() {
     badge.className = 'badge badge-idle';
     badge.innerHTML = '<span class="badge-dot"></span> Bekliyor';
     sessionBar.classList.add('hidden');
+    setupPanel.classList.remove('hidden');
   }
 }
 
@@ -917,33 +1120,134 @@ async function startSession() {
   if (!res.ok) toast(data.detail || 'Hata', 'error');
 }
 
-function openFinishModal()  { document.getElementById('finish-modal').classList.add('open'); }
+let _csvDownloaded = false;
+
+function openFinishModal() {
+  const warn = document.getElementById('finish-csv-warn');
+  const ok   = document.getElementById('finish-csv-ok');
+  if (_csvDownloaded) {
+    warn.style.display = 'none';
+    ok.style.display   = 'block';
+  } else {
+    warn.style.display = 'block';
+    ok.style.display   = 'none';
+  }
+  document.getElementById('finish-modal').classList.add('open');
+}
 function closeFinishModal() { document.getElementById('finish-modal').classList.remove('open'); }
 
 async function finishSession() {
   closeFinishModal();
+  _csvDownloaded = false;
+  // Özet için sayım bitmeden önce state anlık görüntüsünü al
+  const snapScans   = JSON.parse(JSON.stringify(state.scans));
+  const snapSession = JSON.parse(JSON.stringify(state.session || {}));
   const res = await fetch('/api/session/finish', { method: 'POST' });
   const data = await res.json();
-  if (!res.ok) toast(data.detail || 'Hata', 'error');
-  else {
-    // Sayım bitti → setup paneli tekrar göster
-    document.getElementById('setup-panel').classList.remove('hidden');
+  if (!res.ok) { toast(data.detail || 'Hata', 'error'); return; }
+  showSummaryModal(snapScans, snapSession);
+}
+
+function showSummaryModal(scans, session) {
+  const items = Object.keys(scans).length;
+  let totalQty = 0;
+  for (const entries of Object.values(scans)) {
+    for (const e of entries) totalQty += (e.quantity || 0);
   }
+
+  const userQty = {};
+  for (const entries of Object.values(scans)) {
+    for (const e of entries) {
+      const u = e.user || '?';
+      userQty[u] = (userQty[u] || 0) + (e.quantity || 0);
+    }
+  }
+  const usersCount = Object.keys(userQty).length;
+
+  let durationStr = '';
+  if (session?.started_at) {
+    const start = new Date(session.started_at);
+    const end   = new Date();
+    const mins  = Math.round((end - start) / 60000);
+    let dur = mins < 60 ? `${mins} dakika` : `${Math.floor(mins/60)} saat ${mins%60 > 0 ? (mins%60)+' dakika' : ''}`.trim();
+    const startStr = start.toLocaleString('tr-TR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
+    durationStr = `${startStr} · ${dur}`;
+  }
+
+  document.getElementById('summary-items').textContent       = items;
+  document.getElementById('summary-qty').textContent         = totalQty;
+  document.getElementById('summary-users-count').textContent = usersCount || '—';
+  document.getElementById('summary-duration').textContent    = durationStr;
+
+  const listEl = document.getElementById('summary-users-list');
+  listEl.innerHTML = '';
+  const maxQty = Math.max(...Object.values(userQty), 1);
+  const sorted = Object.entries(userQty).sort((a, b) => b[1] - a[1]);
+  if (sorted.length === 0) {
+    listEl.innerHTML = '<div style="font-size:13px;color:var(--muted)">Kayıt yok.</div>';
+  } else {
+    for (const [user, qty] of sorted) {
+      const pct = Math.round((qty / maxQty) * 100);
+      listEl.insertAdjacentHTML('beforeend', `
+        <div class="summary-user-row">
+          <span class="summary-user-name">${user}</span>
+          <div class="summary-user-bar-wrap"><div class="summary-user-bar" style="width:${pct}%"></div></div>
+          <span class="summary-user-qty">${qty} adet</span>
+        </div>`);
+    }
+  }
+
+  document.getElementById('summary-modal').classList.add('open');
+}
+
+function closeSummaryModal() {
+  document.getElementById('summary-modal').classList.remove('open');
 }
 
 // ── TOPLU SİLME (admin) ────────────────────────────────────────────────────
-async function bulkDelete(btn) {
-  const row     = btn.closest('.bulk-del-row');
-  const barcode = row.dataset.barcode;
-  const user    = row.dataset.user;
-  const input   = row.querySelector('.bulk-del-input');
-  const qty     = parseInt(input?.value);
+let _bulkDeletePending = null; // { barcode, user, qty }
+
+function confirmBulkDelete(btn) {
+  const row   = btn.closest('.bulk-del-row');
+  const input = row.querySelector('.bulk-del-input');
+  const qty   = parseInt(input?.value);
+  const max   = parseInt(input?.max);
 
   if (!qty || qty < 1) {
     input.style.borderColor = 'var(--danger)';
     toast('Geçerli bir adet girin.', 'error');
     return;
   }
+  if (qty > max) {
+    input.style.borderColor = 'var(--danger)';
+    toast(`En fazla ${max} adet silebilirsiniz.`, 'error');
+    return;
+  }
+  input.style.borderColor = '';
+
+  _bulkDeletePending = {
+    barcode: row.dataset.barcode,
+    user:    row.dataset.user,
+    qty,
+  };
+
+  document.getElementById('bulk-delete-desc').innerHTML =
+    `<strong style="color:var(--text)">${row.dataset.product}</strong><br>` +
+    `<span style="color:var(--muted)">Kullancı:</span> ${row.dataset.user} &nbsp;·&nbsp; ` +
+    `<span style="color:var(--muted)">Miktar:</span> ${qty} adet silinecek` +
+    `<br><span style="font-size:11px;color:var(--muted);margin-top:4px;display:block">Bu işlem aksiyon geçmişinden geri alınabilir.</span>`;
+  document.getElementById('bulk-delete-modal').classList.add('open');
+}
+
+function closeBulkDeleteModal() {
+  document.getElementById('bulk-delete-modal').classList.remove('open');
+  _bulkDeletePending = null;
+}
+
+async function executeBulkDelete() {
+  if (!_bulkDeletePending) return;
+  const { barcode, user, qty } = _bulkDeletePending;
+  closeBulkDeleteModal();
 
   const res = await fetch('/api/scan/bulk-delete', {
     method: 'POST',
@@ -995,7 +1299,7 @@ function cancelUndo(historyId) {
   clearTimeout(_undoTimer);
   const area = document.getElementById(`undo-area-${historyId}`);
   if (area) {
-    area.innerHTML = `<button class="btn btn-ghost btn-sm undo-btn" onclick="confirmUndo('${historyId}')">↩ Geri Al</button>`;
+    area.innerHTML = `<button class="btn btn-ghost btn-sm undo-btn" onclick="confirmUndo('${historyId}')">Geri Al</button>`;
   }
 }
 
@@ -1011,9 +1315,34 @@ async function executeUndo(historyId) {
 }
 
 // ── CSV EXPORT ─────────────────────────────────────────────────────────────
-function exportCSV() {
-  window.location.href = '/api/export';
+async function exportCSV() {
+  const res = await fetch('/api/export');
+  if (res.status === 404) {
+    openNoDataModal();
+    return;
+  }
+  if (!res.ok) { toast('CSV indirilemedi', 'error'); return; }
+  _csvDownloaded = true;
+  const blob = await res.blob();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  const cd   = res.headers.get('content-disposition') || '';
+  const match = cd.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)/i);
+  a.download = match ? decodeURIComponent(match[1]) : 'sayim.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
+
+function exportCSVAndClose() {
+  exportCSV();
+  finishSession();
+}
+
+function openNoDataModal()  { document.getElementById('no-data-modal').classList.add('open'); }
+function closeNoDataModal() { document.getElementById('no-data-modal').classList.remove('open'); }
 
 // ── TABS ───────────────────────────────────────────────────────────────────
 function switchTab(tab, btn) {
@@ -1111,7 +1440,32 @@ async function saveSettings() {
 }
 
 // ── INIT ───────────────────────────────────────────────────────────────────
-connectWS();
+(async () => {
+  // Sayfa flash'ını önle: WS bağlanmadan önce oturum durumunu HTTP'den al
+  try {
+    const res = await fetch('/api/session/status');
+    if (res.ok) {
+      const data = await res.json();
+      state.isActive = data.is_active;
+      updateSessionUI();
+    }
+  } catch (_) {}
+  connectWS();
+})();
 </script>
+
+<footer style="
+  display:flex; align-items:center; justify-content:center; gap:20px;
+  padding:16px 28px;
+  border-top:1px solid var(--border);
+  background:var(--surface);
+  margin-top:auto;
+">
+  <img src="/static/assets/Luna_Group_Logo.png" alt="Luna Group"
+    style="height:40px;object-fit:contain;filter:brightness(1.15) drop-shadow(0 0 6px rgba(255,255,255,0.15));" />
+  <div style="width:1px;height:20px;background:var(--border);"></div>
+  <span style="font-size:12px;color:var(--muted);letter-spacing:.03em;">Stok Sayım Sistemi © 2026</span>
+</footer>
+
 </body>
 </html>

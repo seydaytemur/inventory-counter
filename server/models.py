@@ -18,11 +18,12 @@ class ScanEntry(BaseModel):
 class HistoryEntry(BaseModel):
     """History paneli için aksiyon kaydı"""
     id: str
-    action: str                    # "add" | "delete" | "undo"
+    action: str                    # "add" | "edit" | "delete" | "undo"
     user: str
     barcode: str
     product_name: str
     quantity: int
+    previous_quantity: Optional[int] = None  # edit geri alımı için eski değer
     timestamp: str
     related_scan_id: str           # hangi ScanEntry'e ait
 

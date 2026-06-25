@@ -108,16 +108,16 @@
   .btn-login:disabled { opacity: .35; cursor: default; }
 
   /* ── ANA EKRAN ── */
-  #main-screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+  #main-screen { display: none; flex-direction: column; flex: 1; overflow: hidden; position: relative; }
 
   /* Topbar */
   .topbar {
     display: flex; align-items: center;
-    padding: 0 14px; height: 50px;
+    padding: 0 28px; height: 64px;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-    gap: 10px;
+    gap: 18px;
   }
   .topbar-brand {
     display: flex; align-items: center; gap: 8px;
@@ -134,34 +134,36 @@
     color: var(--text2);
   }
   .topbar-sep {
-    width: 1px; height: 18px; background: var(--border2); flex-shrink: 0;
+    width: 1px; height: 24px; background: var(--border2); flex-shrink: 0;
   }
   .topbar-user {
-    font-size: 13px; font-weight: 600; color: var(--text);
+    font-size: 14px; font-weight: 600; color: var(--text);
+    padding: 5px 13px; border-radius: 8px;
+    background: var(--surface2); border: 1px solid var(--border);
   }
   .topbar-right {
-    margin-left: auto; display: flex; align-items: center; gap: 6px;
+    margin-left: auto; display: flex; align-items: center; gap: 12px;
   }
   .btn-logout {
     background: none; border: 1px solid var(--border);
-    border-radius: var(--radius-sm); color: var(--muted);
-    font-size: 11px; font-weight: 600; letter-spacing: .03em;
-    padding: 4px 10px; cursor: pointer;
+    border-radius: 8px; color: var(--muted);
+    font-size: 13px; font-weight: 600; letter-spacing: .02em;
+    padding: 6px 16px; cursor: pointer;
     transition: color .15s, border-color .15s; line-height: 1;
   }
   .btn-logout:active { color: var(--text); border-color: var(--border2); }
 
   .conn-badge {
-    display: flex; align-items: center; gap: 5px;
-    padding: 3px 8px; border-radius: 20px;
+    display: flex; align-items: center; gap: 7px;
+    padding: 5px 13px; border-radius: 8px;
     background: var(--surface2); border: 1px solid var(--border);
-    font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    font-size: 13px; font-weight: 600; letter-spacing: .02em;
     color: var(--muted);
     transition: color .3s, border-color .3s;
   }
   .conn-badge.connected { color: var(--success); border-color: #134d2e; background: #071a10; }
   .conn-badge.error     { color: var(--danger);  border-color: #4d1313; background: var(--danger-bg); }
-  .conn-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 
   /* Barkod giriş alanı */
   .scan-area {
@@ -431,14 +433,7 @@
 <div id="login-screen">
   <div class="login-card">
     <div class="login-brand">
-      <div class="login-icon">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b7fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="4" height="18" rx="1"/>
-          <rect x="9" y="3" width="2" height="18" rx="1"/>
-          <rect x="13" y="3" width="3" height="18" rx="1"/>
-          <rect x="18" y="3" width="3" height="18" rx="1"/>
-        </svg>
-      </div>
+      <img src="/static/assets/Luna_Group_Logo.png" alt="Luna Group" style="height:68px;object-fit:contain;filter:brightness(1.15) drop-shadow(0 0 6px rgba(255,255,255,0.15));" />
       <div class="login-title">Stok Sayım Terminali</div>
     </div>
     <div class="login-divider"></div>
@@ -457,20 +452,32 @@
 <!-- ANA EKRAN -->
 <div id="main-screen">
   <div class="session-warn" id="session-warn">
-    Sayım henüz başlamadı veya sona erdi — barkod okutulamaz.
+    Sayım henüz başlamadı veya sona erdi. — Barkod Okutulamaz.
+  </div>
+
+  <!-- Sayım bitti overlay -->
+  <div id="session-end-overlay" style="display:none;position:absolute;inset:0;z-index:50;background:rgba(10,11,18,0.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;padding:32px;">
+    <div style="width:64px;height:64px;border-radius:50%;background:#1a1d27;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:28px;">✓</div>
+    <div>
+      <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px;">Sayım Sona Erdi</div>
+      <div id="session-end-time" style="font-size:13px;color:var(--muted)"></div>
+    </div>
+    <div style="width:100%;max-width:280px;height:1px;background:var(--border2)"></div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.6;">
+      Katılımınız için teşekkürler.<br>Çıkış yapmak için aşağıdaki butona basın.
+    </div>
+    <button onclick="logout()" style="
+      margin-top:8px;padding:12px 32px;
+      background:var(--accent);color:#fff;
+      border:none;border-radius:8px;
+      font-size:15px;font-weight:600;cursor:pointer;
+      letter-spacing:.02em;
+    ">Çıkış Yap</button>
   </div>
 
   <div class="topbar">
     <div class="topbar-brand">
-      <div class="topbar-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b7fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="4" height="18" rx="1"/>
-          <rect x="9" y="3" width="2" height="18" rx="1"/>
-          <rect x="13" y="3" width="3" height="18" rx="1"/>
-          <rect x="18" y="3" width="3" height="18" rx="1"/>
-        </svg>
-      </div>
-      <span class="topbar-appname">STOK SAYIM</span>
+      <img src="/static/assets/Luna_Group_Logo.png" alt="Luna Group" style="height:46px;object-fit:contain;filter:brightness(1.15) drop-shadow(0 0 6px rgba(255,255,255,0.15));" />
     </div>
     <div class="topbar-sep"></div>
     <span class="topbar-user" id="topbar-user"></span>
@@ -479,7 +486,7 @@
         <span class="conn-dot"></span>
         <span id="status-text">bağlanıyor</span>
       </div>
-      <button class="btn-logout" onclick="confirmLogout()">Geri</button>
+      <button class="btn-logout" onclick="confirmLogout()">Çıkış</button>
     </div>
   </div>
 
@@ -588,6 +595,7 @@ function closeLogoutModal() {
 
 function logout() {
   closeLogoutModal();
+  document.getElementById('session-end-overlay').style.display = 'none';
   localStorage.removeItem('terminal_user');
   if (ws) { ws.close(); ws = null; }
   S.user = '';
@@ -610,7 +618,7 @@ function joinSession(name) {
   document.getElementById('topbar-user').textContent = name;
   fetchSettings();
   connectWS();
-  setTimeout(focusBarcodeInput, 100);
+  // Focus STATE mesajı geldikten sonra yapılır (updateSessionWarn input'u enable eder)
 }
 
 // ── WEBSOCKET ─────────────────────────────────────────────────────────────
@@ -860,6 +868,7 @@ function handleMsg(msg) {
       S.isActive = msg.session?.is_active || false;
       renderList();
       updateSessionWarn();
+      if (S.isActive) focusBarcodeInput();
       // Kolon haritası değiştiyse (veya hiç yüklenmemişse) ürün listesini yeniden çek
       const newMapKey = JSON.stringify(msg.column_map || {});
       if (!S.productsLoaded || S.lastColumnMapKey !== newMapKey) {
@@ -908,7 +917,7 @@ function handleMsg(msg) {
     case 'session':
       S.isActive = msg.is_active;
       updateSessionWarn();
-      if (!msg.is_active) showFeedback('Sayım sona erdi.', 'err');
+      if (!msg.is_active) startSessionEndCountdown();
       break;
 
     case 'history_update':
@@ -1165,6 +1174,17 @@ function updateSessionWarn() {
   document.getElementById('qty-input').disabled = !S.isActive;
 }
 
+function startSessionEndCountdown() {
+  const overlay = document.getElementById('session-end-overlay');
+  const timeEl  = document.getElementById('session-end-time');
+  const now = new Date().toLocaleString('tr-TR', {
+    day: '2-digit', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+  timeEl.textContent = now;
+  overlay.style.display = 'flex';
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────
 // Daha önce giriş yapıldıysa otomatik bağlan
 const _savedUser = localStorage.getItem('terminal_user');
@@ -1218,5 +1238,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+
+<footer style="
+  display:flex; align-items:center; justify-content:center; gap:20px;
+  padding:16px 28px;
+  border-top:1px solid var(--border2);
+  background:var(--surface);
+  flex-shrink:0;
+">
+  <img src="/static/assets/Luna_Group_Logo.png" alt="Luna Group"
+    style="height:40px;object-fit:contain;filter:brightness(1.15) drop-shadow(0 0 6px rgba(255,255,255,0.15));" />
+  <div style="width:1px;height:20px;background:var(--border2);"></div>
+  <span style="font-size:12px;color:var(--muted2,#555b7a);letter-spacing:.03em;">Stok Sayım Sistemi © 2026</span>
+</footer>
+
 </body>
 </html>
