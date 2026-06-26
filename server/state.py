@@ -195,11 +195,11 @@ class AppState:
         async with self._lock:
             entry = ScanEntry(
                 id=_uid(),
-                barcode=matched_barcode,   # CSV'deki tam barkod
+                barcode=matched_barcode,
                 quantity=quantity,
                 user=user,
                 timestamp=_now(),
-                match_key=original,        # kullanıcının okuturken gönderdiği ham kod
+                match_key=original,
                 product_name=product_name,
                 extra_fields=product,
             )
@@ -447,6 +447,7 @@ class AppState:
             "history": self.session.history if include_data else [],
             "connected_users": list(self._connections.keys()),
             "column_map": self.session.column_map,
+            "alt_to_primary": self._alt_to_primary,
         }
 
     # ── WebSocket bağlantı yönetimi ──────────────────────────────────────────

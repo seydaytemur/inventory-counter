@@ -1026,36 +1026,60 @@ async function updateScanQty(scanId, barcode) {
   }
 }
 
-// ── SİLME ─────────────────────────────────────────────────────────────────
+// ── SİLME / GÜNCELLEME ─────────────────────────────────────────────────────
 let _deleteTimer = null;
 
-function deleteScan(scanId) {
-  // Zaten onay bekleyen başka bir silme varsa iptal et
-  cancelAllDeletes();
+async function updateScanQty(scanId, barcode) {
+  const input  = document.getElementById(`qty-edit-${scanId}`);
+  const newQty = parseInt(input?.value);
+  if (!newQty || newQty < 1) { input.style.borderColor = 'var(--danger)'; return; }
+  const res = await fetch(`/api/scan/${scanId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ quantity: newQty, user: S.user }),
+  });
+  if (!res.ok) { const d = await res.json(); showFeedback(d.detail || 'Güncellenemedi', 'err'); }
+}
 
+function deleteScan(scanId) {
+  cancelAllDeletes();
   const actionsEl = document.getElementById(`scan-actions-${scanId}`);
   if (!actionsEl) return;
 
+  // Mevcut adedi bul
+  const qtyBadge = document.getElementById(`qty-badge-${scanId}`);
+  const curQty   = qtyBadge ? parseInt(qtyBadge.textContent) || 1 : 1;
+  const label    = curQty > 1
+    ? `${curQty} adetten 1 tanesi silinecek.`
+    : `Kayıt silinecek.`;
+
   actionsEl.innerHTML = `
     <div class="delete-confirm-row">
-      <span class="delete-confirm-label">Silinsin mi?</span>
+      <span class="delete-confirm-label">${label}</span>
       <button class="btn-del-cancel" onclick="cancelDelete('${scanId}')">Hayır</button>
-      <button class="btn-del-confirm" onclick="confirmDelete('${scanId}')">Evet, Sil</button>
-    </div>
-  `;
-
-  // 4 saniye sonra otomatik iptal
+      <button class="btn-del-confirm" onclick="confirmDelete('${scanId}', ${curQty})">Evet, Sil</button>
+    </div>`;
   _deleteTimer = setTimeout(() => cancelDelete(scanId), 4000);
 }
 
-function confirmDelete(scanId) {
+async function confirmDelete(scanId, curQty) {
   clearTimeout(_deleteTimer);
-  ws.send(JSON.stringify({ type: 'delete', scan_id: scanId, user: S.user }));
+  if (curQty > 1) {
+    // Adedi 1 azalt
+    const res = await fetch(`/api/scan/${scanId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quantity: curQty - 1, user: S.user }),
+    });
+    if (!res.ok) { const d = await res.json(); showFeedback(d.detail || 'Silinemedi', 'err'); }
+  } else {
+    // Son adet — entry'yi tamamen kaldır
+    ws.send(JSON.stringify({ type: 'delete', scan_id: scanId, user: S.user }));
+  }
 }
 
 function cancelDelete(scanId) {
   clearTimeout(_deleteTimer);
-  // Kartı yeniden render et — orijinal action row'una döner
   renderList();
 }
 
@@ -1068,10 +1092,12 @@ function renderList() {
   const area = document.getElementById('list-area');
 
   if (S.tab === 'mine') {
-    // Sadece kendi kayıtları, en yeni üstte
+    // Sadece kendi kayıtları — sunucu zaten barkod başına tek entry tutuyor
     const mine = [];
     for (const entries of Object.values(S.scans)) {
-      entries.filter(e => e.user === S.user).forEach(e => mine.push(e));
+      for (const e of entries) {
+        if (e.user === S.user) mine.push(e);
+      }
     }
     mine.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
@@ -1107,8 +1133,7 @@ function renderList() {
             <button class="btn-update" onclick="updateScanQty('${e.id}', '${e.barcode}')">Güncelle</button>
             <button class="btn-del" onclick="deleteScan('${e.id}')">SİL</button>
           </div>
-        </div>
-      `;
+        </div>`;
     }).join('');
 
   } else {

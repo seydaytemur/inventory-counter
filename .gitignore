@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Sanal ortam
+env/
+venv/
+
+# Uygulama verileri
+server/session.json
+server/session.tmp
+
+# IDE
+.vscode/
+.idea/

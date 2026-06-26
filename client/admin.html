@@ -469,6 +469,36 @@
 
   .add-rule-row { display: flex; gap: 8px; align-items: center; }
 
+  /* ── KURAL TEST ARACI ── */
+  .rule-tester {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .rule-tester-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .rule-tester-row { display: flex; gap: 8px; align-items: center; }
+  .rule-tester-input {
+    flex: 1; background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 6px; color: var(--text); font-size: 13px;
+    font-family: var(--font-mono); padding: 7px 10px; outline: none;
+    transition: border-color .15s;
+  }
+  .rule-tester-input:focus { border-color: var(--accent); }
+  .rule-tester-result {
+    display: none; border-radius: 6px; padding: 10px 12px;
+    font-size: 12px; line-height: 1.7;
+  }
+  .rule-tester-result.match  { background: #071a10; border: 1px solid #134d2e; }
+  .rule-tester-result.no-rule{ background: var(--surface2); border: 1px solid var(--border); }
+  .tester-before { color: var(--muted); }
+  .tester-arrow  { color: var(--border2); margin: 0 4px; }
+  .tester-after  { color: var(--success); font-weight: 700; font-family: var(--font-mono); }
+  .tester-after.unchanged { color: var(--muted); font-weight: 400; }
+  .tester-steps  { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+
   /* ── SCROLLBAR ── */
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -650,6 +680,20 @@
       </div>
     </div>
 
+    <!-- Kural Test Aracı -->
+    <div class="settings-section">
+      <h3>Kural Test Aracı</h3>
+      <div class="rule-tester">
+        <div class="rule-tester-label">Ham barkod girin, kuralların nasıl uygulandığını görün</div>
+        <div class="rule-tester-row">
+          <input class="rule-tester-input" id="tester-input" placeholder="Örn: 1P4719823001"
+            oninput="runRuleTest()" autocomplete="off" spellcheck="false" />
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('tester-input').value='';runRuleTest()">Temizle</button>
+        </div>
+        <div class="rule-tester-result" id="tester-result"></div>
+      </div>
+    </div>
+
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeSettingsModal()">İptal</button>
       <button class="btn btn-primary" onclick="saveSettings()">Kaydet</button>
@@ -788,6 +832,7 @@ const state = {
   session: {},
   connectedUsers: [],
   columnMap: {},
+  altToPrimary: {},
   currentUser: 'admin',   // admin paneli için sabit
 };
 
@@ -836,6 +881,7 @@ function handleWsMessage(msg) {
       state.session  = msg.session || {};
       state.connectedUsers = msg.connected_users || [];
       state.columnMap = msg.column_map || {};
+      state.altToPrimary = msg.alt_to_primary || {};
       renderAll();
       updateSessionUI();
       break;
@@ -1370,6 +1416,8 @@ async function openSettingsModal() {
     if (res.ok) _currentSettings = await res.json();
   } catch(e) {}
   renderSettingsModal();
+  document.getElementById('tester-input').value = '';
+  document.getElementById('tester-result').style.display = 'none';
   document.getElementById('settings-modal').classList.add('open');
 }
 
@@ -1414,12 +1462,98 @@ function addRule() {
   _currentSettings = { ..._currentSettings, barcode_rules: rules };
   document.getElementById('new-rule-value').value = '';
   renderRules(rules);
+  runRuleTest();
 }
 
 function removeRule(index) {
   const rules = (_currentSettings.barcode_rules || []).filter((_, i) => i !== index);
   _currentSettings = { ..._currentSettings, barcode_rules: rules };
   renderRules(rules);
+  runRuleTest();
+}
+
+function runRuleTest() {
+  const raw    = document.getElementById('tester-input').value;
+  const result = document.getElementById('tester-result');
+
+  if (!raw.trim()) { result.style.display = 'none'; return; }
+
+  const rules = _currentSettings.barcode_rules || [];
+  let s = raw.trim().toUpperCase();
+  const steps = [];
+
+  for (const rule of rules) {
+    const val = (rule.value || '').toUpperCase();
+    if (!val) continue;
+    const before = s;
+    if (rule.type === 'prefix' && s.startsWith(val)) {
+      s = s.slice(val.length);
+      steps.push({ rule, before, after: s, matched: true });
+    } else if (rule.type === 'suffix' && s.endsWith(val)) {
+      s = s.slice(0, -val.length);
+      steps.push({ rule, before, after: s, matched: true });
+    } else {
+      steps.push({ rule, before, after: s, matched: false });
+    }
+  }
+
+  // Adım 2: alternatif barkod → birincil barkod dönüşümü
+  const altMap     = state.altToPrimary || {};
+  const primary    = altMap[s] || null;
+  const afterStrip = s;
+
+  const changed  = afterStrip !== raw.trim().toUpperCase();
+  const hasRules = rules.length > 0;
+  const anyChange = changed || !!primary;
+
+  result.className = 'rule-tester-result ' + (anyChange ? 'match' : 'no-rule');
+  result.style.display = 'block';
+
+  const final      = primary || afterStrip;
+  const typeLabel  = r => r.type === 'prefix' ? 'Baştan Sil' : 'Sondan Sil';
+
+  let html = `
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <span class="tester-before" style="font-family:var(--font-mono)">${raw.trim().toUpperCase()}</span>
+      <span class="tester-arrow">→</span>
+      <span class="tester-after ${anyChange ? '' : 'unchanged'}">${final}</span>
+      ${anyChange
+        ? `<span style="font-size:10px;color:var(--success);background:#0d2e1a;border:1px solid #134d2e;padding:1px 7px;border-radius:3px">Dönüşüm Uygulandı</span>`
+        : `<span style="font-size:10px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);padding:1px 7px;border-radius:3px">${hasRules ? 'Eşleşme Yok' : 'Kural Tanımlı Değil'}</span>`}
+    </div>`;
+
+  html += `<div class="tester-steps">`;
+
+  // Prefix/suffix kural adımları
+  for (const st of steps) {
+    const icon    = st.matched ? '✓' : '–';
+    const color   = st.matched ? 'var(--success)' : '#444';
+    const typeCls = st.rule.type === 'prefix' ? 'rule-type-prefix' : 'rule-type-suffix';
+    html += `
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:${color}">
+        <span style="width:12px;text-align:center">${icon}</span>
+        <span class="rule-type-badge ${typeCls}" style="font-size:9px">${typeLabel(st.rule)}</span>
+        <span style="font-family:var(--font-mono);color:#666">"${st.rule.value.toUpperCase()}"</span>
+        ${st.matched ? `<span style="color:#444">→</span><span style="font-family:var(--font-mono);color:var(--success)">${st.after}</span>` : ''}
+      </div>`;
+  }
+
+  // Alt→primary adımı
+  if (primary) {
+    html += `
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--accent2)">
+        <span style="width:12px;text-align:center">✓</span>
+        <span class="rule-type-badge" style="font-size:9px;background:#1a1a2e;color:var(--accent2);border:1px solid #312e5c">Alt Barkod</span>
+        <span style="font-family:var(--font-mono);color:#666">"${afterStrip}"</span>
+        <span style="color:#444">→</span>
+        <span style="font-family:var(--font-mono);color:var(--accent2)">${primary}</span>
+      </div>`;
+  } else if (!steps.length) {
+    html += `<div style="font-size:11px;color:#444">Tanımlı kural yok</div>`;
+  }
+
+  html += `</div>`;
+  result.innerHTML = html;
 }
 
 async function saveSettings() {
