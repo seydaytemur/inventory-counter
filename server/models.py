@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
@@ -10,7 +10,6 @@ class ScanEntry(BaseModel):
     quantity: int                  # girilen adet
     user: str                      # okuyan kişi
     timestamp: str                 # ISO format
-    match_key: str                 # eşleşen ürün anahtarı (ST ya da PN)
     product_name: str              # SAP listesinden gelen ürün adı
     extra_fields: dict = {}        # SAP CSV'den gelen diğer kolonlar
 
@@ -47,9 +46,6 @@ class CountSession(BaseModel):
     # History (silme, ekleme, geri alma) — sadece ana makinede görünür
     history: list = []
 
-    # Bağlı kullanıcılar: { user_name -> websocket connection count }
-    connected_users: dict = {}
-
 
 # ── WebSocket mesaj tipleri ──────────────────────────────────────────────────
 
@@ -57,8 +53,6 @@ class WsMessageType:
     # Terminal → Sunucu
     SCAN       = "scan"           # barkod + adet gönder
     DELETE     = "delete"         # scan_id sil
-    JOIN       = "join"           # kullanıcı bağlandı
-
     # Sunucu → Terminal / Admin
     STATE      = "state"          # tam sayım durumu (ilk bağlanınca)
     SCAN_OK    = "scan_ok"        # başarılı okutma onayı
@@ -72,11 +66,6 @@ class WsMessageType:
 
 
 # ── HTTP istek gövdeleri ─────────────────────────────────────────────────────
-
-class ScanRequest(BaseModel):
-    barcode: str
-    quantity: int = Field(gt=0)
-    user: str
 
 class DeleteRequest(BaseModel):
     scan_id: str

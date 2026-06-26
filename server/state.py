@@ -62,7 +62,7 @@ class AppState:
             return
         try:
             data = json.loads(SESSION_FILE.read_text(encoding="utf-8"))
-            self.session.is_active    = data.get("is_active", False)
+            self.session.is_active    = False  # sunucu yeniden başlayınca aktif sayım sıfırlanır
             self.session.started_at   = data.get("started_at")
             self.session.finished_at  = data.get("finished_at")
             self.session.scans        = data.get("scans", {})
@@ -199,7 +199,6 @@ class AppState:
                 quantity=quantity,
                 user=user,
                 timestamp=_now(),
-                match_key=original,
                 product_name=product_name,
                 extra_fields=product,
             )
@@ -382,7 +381,6 @@ class AppState:
                     quantity=target["quantity"],
                     user=target["user"],
                     timestamp=target["timestamp"],
-                    match_key=barcode,
                     product_name=product_name,
                     extra_fields=product or {},
                 )

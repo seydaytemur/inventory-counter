@@ -920,6 +920,10 @@ function handleMsg(msg) {
       if (!msg.is_active) startSessionEndCountdown();
       break;
 
+    case 'settings_update':
+      S.barcodeRules = msg.settings.barcode_rules || [];
+      break;
+
     case 'history_update':
       // Terminal için ekstra işlem gerekmez
       break;
