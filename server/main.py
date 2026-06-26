@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from models import WsMessageType, ScanRequest, DeleteRequest, BulkDeleteRequest, UndoRequest
+from models import WsMessageType, DeleteRequest, BulkDeleteRequest, UndoRequest
 from state import app_state
 
 app = FastAPI(title="Stok Sayım Sistemi", version="1.0.0")
@@ -89,7 +89,6 @@ async def upload_csv(file: UploadFile = File(...)):
     # Ham satırları geçici olarak sakla (eşleştirme yapılana kadar)
     rows = list(reader)
     app_state._pending_csv_rows = rows
-    app_state._pending_csv_columns = list(columns)
 
     return {
         "columns": list(columns),
@@ -147,7 +146,6 @@ async def set_column_map(body: dict):
 
     # Geçici veriyi temizle
     app_state._pending_csv_rows = None
-    app_state._pending_csv_columns = None
 
     alt_loaded = sum(
         1 for row in rows
@@ -196,6 +194,10 @@ async def save_settings(body: dict):
 
     new_settings = {"delimiter": delimiter, "barcode_rules": rules}
     app_state.save_settings(new_settings)
+    await app_state.broadcast({
+        "type": "settings_update",
+        "settings": new_settings,
+    })
     return {"status": "ok", "settings": new_settings}
 
 
@@ -269,43 +271,6 @@ async def session_status():
         "scan_count": sum(len(v) for v in app_state.session.scans.values()),
         "connected_users": app_state.get_connected_users(),
     }
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# BARKOD İŞLEMLERİ (HTTP — WebSocket ile senkron çalışır)
-# ─────────────────────────────────────────────────────────────────────────────
-
-@app.post("/api/scan")
-async def add_scan(req: ScanRequest):
-    """Barkod ekle"""
-    if not app_state.session.is_active:
-        raise HTTPException(400, "Sayım aktif değil.")
-
-    success, message, entry = await app_state.add_scan(
-        barcode=req.barcode,
-        quantity=req.quantity,
-        user=req.user,
-    )
-
-    if not success:
-        raise HTTPException(422, message)
-
-    # Tüm bağlı istemcilere bildir
-    await app_state.broadcast({
-        "type": WsMessageType.SCAN_NEW,
-        "entry": entry.model_dump(),
-        "total_for_barcode": sum(
-            e["quantity"]
-            for e in app_state.session.scans.get(entry.barcode, [])
-        ),
-    })
-
-    await app_state.broadcast({
-        "type": WsMessageType.HISTORY,
-        "history": app_state.session.history[-1],  # son history kaydı
-    })
-
-    return {"status": "ok", "entry": entry.model_dump()}
 
 
 @app.patch("/api/scan/{scan_id}")
