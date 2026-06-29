@@ -519,6 +519,7 @@
     <div class="users-pill">
       <strong id="user-count">0</strong> terminal bağlı
     </div>
+    <button class="btn btn-ghost" onclick="openConnectModal()" title="Terminali Bağla" style="font-size:13px;padding:6px 16px;">Terminali Bağla</button>
     <button class="btn btn-ghost" onclick="openSettingsModal()" title="Ayarlar" style="font-size:13px;padding:6px 16px;">Ayarlar</button>
     <div id="ws-status" style="font-size:13px;color:var(--muted);padding:5px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);">⬤ bağlanıyor</div>
   </div>
@@ -592,7 +593,7 @@
               <th>Ürün Adı</th>
               <th>Toplam Adet</th>
               <th>Sayanlar</th>
-              <th>Düzenle / Sil</th>
+              <th id="th-actions"></th>
             </tr>
           </thead>
           <tbody id="all-tbody">
@@ -820,6 +821,37 @@
   </div>
 </div>
 
+<!-- Terminal Bağla Modal -->
+<div class="modal-overlay" id="connect-modal">
+  <div class="modal" style="width:380px;gap:20px">
+    <h2 style="font-size:16px;margin:0">Terminali Bağla</h2>
+    <div style="height:1px;background:var(--border)"></div>
+
+    <!-- QR Kod -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+      <div style="font-size:13px;color:var(--muted)">Terminal cihazıyla QR kodu okutun</div>
+      <div id="qr-container" style="background:#fff;padding:12px;border-radius:8px;min-height:180px;width:204px">
+        <span style="color:#999;font-size:13px">Yükleniyor...</span>
+      </div>
+    </div>
+
+    <div style="height:1px;background:var(--border)"></div>
+
+    <!-- Manuel URL -->
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:12px;color:var(--muted)">Ya da tarayıcıya elle yazın</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="connect-url" readonly style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);font-family:monospace" />
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;white-space:nowrap" onclick="copyConnectUrl()">Kopyala</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeConnectModal()">Kapat</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast container -->
 <div id="toast-container"></div>
 
@@ -947,6 +979,7 @@ function handleWsMessage(msg) {
         renderAll();
         toast('▶ Sayım başladı', 'info');
       } else {
+        renderScanTables();
         toast('■ Sayım tamamlandı', 'info');
       }
       updateSessionUI();
@@ -986,6 +1019,10 @@ function getSummary() {
 function renderScanTables() {
   const summary = getSummary();
 
+  // Sayım aktifse sil kolonu başlığını göster
+  const thActions = document.getElementById('th-actions');
+  if (thActions) thActions.textContent = state.isActive ? 'Düzenle / Sil' : '';
+
   // Genel
   const allBody = document.getElementById('all-tbody');
   document.getElementById('total-count').textContent = `${summary.length} kalem`;
@@ -1003,8 +1040,7 @@ function renderScanTables() {
         .map(([u, qty]) => `<span class="user-chip"><span class="user-chip-name">${u}</span><span class="user-chip-qty">×${qty}</span></span>`)
         .join('');
 
-      // Her kullanıcı için: [kullanıcı adı]  [input: kaç silinecek]  [Sil]
-      const deleteRows = Object.entries(userTotals).map(([u, qty]) => `
+      const deleteRows = state.isActive ? Object.entries(userTotals).map(([u, qty]) => `
           <div class="bulk-del-row"
             data-barcode="${row.barcode.replace(/"/g,'&quot;')}"
             data-user="${u.replace(/"/g,'&quot;')}"
@@ -1014,7 +1050,7 @@ function renderScanTables() {
               value="1" min="1" max="${qty}" title="Maks: ${qty}" />
             <button class="bulk-del-btn" onclick="confirmBulkDelete(this)">Sil</button>
           </div>`
-      ).join('');
+      ).join('') : '';
 
       return `
       <tr>
@@ -1022,7 +1058,7 @@ function renderScanTables() {
         <td>${row.product_name}</td>
         <td><span class="qty-badge">${row.total_qty}</span></td>
         <td>${userChips}</td>
-        <td>${deleteRows}</td>
+        ${state.isActive ? `<td>${deleteRows}</td>` : ''}
       </tr>`;
     }).join('');
   }
@@ -1590,6 +1626,37 @@ async function saveSettings() {
   } catch (_) {}
   connectWS();
 })();
+
+// ── TERMİNAL BAĞLA MODAL ────────────────────────────────────────────────────
+async function openConnectModal() {
+  document.getElementById('connect-modal').classList.add('open');
+  document.getElementById('qr-container').innerHTML = '<span style="color:#999;font-size:13px">Yükleniyor...</span>';
+  document.getElementById('connect-url').value = '';
+
+  try {
+    const res = await fetch('/api/server-info');
+    const data = await res.json();
+    const url = data.terminal_url;
+
+    document.getElementById('connect-url').value = url;
+
+    // Sunucudan gelen base64 PNG'yi göster
+    const qrEl = document.getElementById('qr-container');
+    qrEl.innerHTML = `<img src="data:image/png;base64,${data.qr_png}" style="width:180px;height:180px;display:block;" />`;
+  } catch (e) {
+    document.getElementById('qr-container').innerHTML = '<span style="color:var(--danger);font-size:13px">IP alınamadı</span>';
+  }
+}
+
+function closeConnectModal() {
+  document.getElementById('connect-modal').classList.remove('open');
+}
+
+function copyConnectUrl() {
+  const val = document.getElementById('connect-url').value;
+  if (!val) return;
+  navigator.clipboard.writeText(val).then(() => toast('URL kopyalandı', 'success'));
+}
 </script>
 
 <footer style="

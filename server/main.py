@@ -4,9 +4,11 @@ main.py — FastAPI + WebSocket sunucusu
     uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 """
 
+import base64
 import csv
 import io
 import json
+import socket
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -163,6 +165,36 @@ async def set_column_map(body: dict):
         "skipped": skipped,
         "column_map": column_map,
         "alt_loaded": alt_loaded,
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SUNUCU BİLGİSİ
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/api/server-info")
+async def server_info():
+    """Sunucunun yerel ağ IP'sini, terminal URL'ini ve QR kodunu döner."""
+    import qrcode
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+    except Exception:
+        ip = "127.0.0.1"
+
+    url = f"http://{ip}:8000/terminal"
+
+    img = qrcode.make(url)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    qr_b64 = base64.b64encode(buf.getvalue()).decode()
+
+    return {
+        "ip": ip,
+        "terminal_url": url,
+        "qr_png": qr_b64,
     }
 
 
