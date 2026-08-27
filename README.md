@@ -2,6 +2,25 @@
 
 FastAPI + WebSocket tabanlı, yerel ağ üzerinden çalışan gerçek zamanlı stok sayım uygulaması. Bir ana makine sayımı yönetir; Zebra el terminalleri (veya herhangi bir tarayıcı) barkod okutarak sayıma katılır. Tüm cihazlar WebSocket ile senkron çalışır.
 
+## Ekran Görüntüleri
+
+### Yönetim Paneli (Admin)
+
+| Ürün Listesi Yükleme & Eşleştirme | Aktif Sayım Takibi |
+| :---: | :---: |
+| ![Yönetim Paneli Kurulum](screenshots/admin_setup.png) | ![Yönetim Paneli Aktif Sayım](screenshots/admin_active.png) |
+
+| Cihaz Bağlantı QR Kodu |
+| :---: |
+| ![Terminal Bağlantı QR Kodu](screenshots/admin_qr.png) |
+
+### Sayım Terminali (Mobil)
+
+| Terminal Giriş Ekranı | Terminal Sayım Ekranı |
+| :---: | :---: |
+| ![Terminal Giriş](screenshots/terminal_login.png) | ![Terminal Sayım](screenshots/terminal_scan.png) |
+
+
 ## Özellikler
 
 - SAP'tan alınan ürün listesi CSV'sini yükleyip kolon eşleştirmesi yapma
